@@ -1,0 +1,628 @@
+// Prisma Schema — JREAL VISION DESIGN
+// Based on BACKEND LOGIC.pdf Database Structure (Section 17)
+// Database: PostgreSQL via Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────
+// CORE: Users, Profiles, Organizations
+// ─────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  passwordHash  String    @map("password_hash")
+  role          UserRole  @default(CUSTOMER)
+  avatar        String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  profiles       Profile[]
+  organizations  Organization[]
+  orders         Order[]
+  projects       Project[]
+  quotes         Quote[]
+  payments       Payment[]
+  files          File[]
+  bookings       Booking[]
+  messagesSent   Message[]       @relation("MessageSender")
+  notifications  Notification[]
+  negotiations   Negotiation[]
+  reviews        Review[]
+  wishlistItems  WishlistItem[]
+
+  // Gallery Artist profile
+  artist         Artist?
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  STAFF
+  ARTIST
+}
+
+model Profile {
+  id          String      @id @default(cuid())
+  userId      String      @map("user_id")
+  type        ProfileType
+  companyName String?     @map("company_name")
+  tinNumber   String?     @map("tin_number")
+  address     String?
+  city        String?
+  country     String?     @default("Rwanda")
+  bio         String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+enum ProfileType {
+  PERSONAL
+  BUSINESS
+  ORGANIZATION
+}
+
+model Organization {
+  id               String           @id @default(cuid())
+  ownerId          String           @map("owner_id")
+  name             String
+  organizationType OrganizationType @map("organization_type")
+  registrationNo   String?          @map("registration_no")
+  address          String?
+  city             String?
+  country          String?          @default("Rwanda")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@map("organizations")
+}
+
+enum OrganizationType {
+  NGO
+  COMPANY
+  GOVERNMENT
+  COOPERATIVE
+}
+
+// ─────────────────────────────────────
+// PRODUCTS & SERVICES (B2C Shop)
+// ─────────────────────────────────────
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  price       Float
+  pricingType PricingType @default(FIXED) @map("pricing_type")
+  stock       Int         @default(0)
+  images      String[]    // Array of image URLs
+  featured    Boolean     @default(false)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+enum PricingType {
+  FIXED
+  CUSTOM
+  QUOTE_BASED
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  category    String  // e.g. "design", "printing", "photography", "videography", "marketing", "branding"
+  basePrice   Float?  @map("base_price")
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  projectServices ProjectService[]
+  bookings        Booking[]
+
+  @@map("services")
+}
+
+// ─────────────────────────────────────
+// ORDERS (B2C Flow)
+// ─────────────────────────────────────
+
+model Order {
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique @map("order_number") // e.g. JV1025
+  customerId    String        @map("customer_id")
+  total         Float
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID) @map("payment_status")
+  shippingAddress String?     @map("shipping_address")
+  shippingCity    String?     @map("shipping_city")
+  notes         String?
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  customer  User        @relation(fields: [customerId], references: [id])
+  items     OrderItem[]
+  payments  Payment[]
+  reviews   Review[]
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_CHECK
+  ARTWORK_CHECK
+  PRODUCTION
+  QUALITY_CONTROL
+  READY
+  DELIVERY
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String @map("order_id")
+  productId String @map("product_id")
+  quantity  Int
+  price     Float
+  options   String? // JSON string of selected options (size, color, etc.)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// ─────────────────────────────────────
+// PROJECTS (B2B & B2NGO Flow)
+// ─────────────────────────────────────
+
+model Project {
+  id          String        @id @default(cuid())
+  projectNumber String      @unique @map("project_number") // e.g. PRJ-001
+  customerId  String        @map("customer_id")
+  title       String
+  description String?
+  projectType ProjectType   @map("project_type")
+  status      ProjectStatus @default(QUOTATION)
+  total       Float?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  customer        User              @relation(fields: [customerId], references: [id])
+  services        ProjectService[]
+  quotes          Quote[]
+  files           File[]
+  messages        Message[]
+  payments        Payment[]
+  marketingCampaigns MarketingCampaign[]
+
+  @@map("projects")
+}
+
+enum ProjectType {
+  BUSINESS_BRANDING
+  NGO_PROJECT
+  MARKETING_CAMPAIGN
+  PHOTOGRAPHY_SESSION
+  VIDEOGRAPHY_SESSION
+  CUSTOM
+}
+
+enum ProjectStatus {
+  QUOTATION
+  APPROVED
+  DEPOSIT_PAID
+  DESIGN
+  PRODUCTION
+  MEDIA
+  MARKETING
+  COMPLETED
+  CANCELLED
+}
+
+model ProjectService {
+  id        String @id @default(cuid())
+  projectId String @map("project_id")
+  serviceId String @map("service_id")
+  status    String @default("Pending") // Pending, In Progress, Completed
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("project_services")
+}
+
+// ─────────────────────────────────────
+// QUOTATION & NEGOTIATION SYSTEM
+// ─────────────────────────────────────
+
+model Quote {
+  id         String      @id @default(cuid())
+  quoteNumber String     @unique @map("quote_number") // e.g. QT-1025
+  projectId  String?     @map("project_id")
+  customerId String      @map("customer_id")
+  amount     Float       // Initial quote amount
+  discount   Float?      @default(0)
+  finalPrice Float?      @map("final_price")
+  status     QuoteStatus @default(DRAFT)
+  validUntil DateTime?   @map("valid_until")
+  terms      String?
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  project      Project?      @relation(fields: [projectId], references: [id])
+  customer     User          @relation(fields: [customerId], references: [id])
+  negotiations Negotiation[]
+  payments     Payment[]
+
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  NEGOTIATING
+  EXPIRED
+}
+
+model Negotiation {
+  id          String            @id @default(cuid())
+  quoteId     String            @map("quote_id")
+  userId      String            @map("user_id")
+  offerAmount Float             @map("offer_amount")
+  message     String?
+  status      NegotiationStatus @default(PENDING)
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("negotiations")
+}
+
+enum NegotiationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COUNTERED
+}
+
+// ─────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────
+
+model Payment {
+  id         String        @id @default(cuid())
+  customerId String        @map("customer_id")
+  orderId    String?       @map("order_id")
+  quoteId    String?       @map("quote_id")
+  projectId  String?       @map("project_id")
+  amount     Float
+  method     PaymentMethod @default(MOMO)
+  status     PaymentTxStatus @default(PENDING)
+  reference  String?       // External payment reference
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  customer User     @relation(fields: [customerId], references: [id])
+  order    Order?   @relation(fields: [orderId], references: [id])
+  quote    Quote?   @relation(fields: [quoteId], references: [id])
+  project  Project? @relation(fields: [projectId], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  MOMO
+  AIRTEL
+  CARD
+  BANK_TRANSFER
+  CASH
+}
+
+enum PaymentTxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REFUNDED
+}
+
+// ─────────────────────────────────────
+// FILE MANAGEMENT (Section 11)
+// ─────────────────────────────────────
+
+model File {
+  id         String   @id @default(cuid())
+  customerId String   @map("customer_id")
+  projectId  String?  @map("project_id")
+  filename   String
+  secureUrl  String   @map("secure_url")
+  fileType   String?  @map("file_type") // e.g. image/png, application/pdf
+  sizeBytes  Int?     @map("size_bytes")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer User     @relation(fields: [customerId], references: [id])
+  project  Project? @relation(fields: [projectId], references: [id])
+
+  @@map("files")
+}
+
+// ─────────────────────────────────────
+// MESSAGES (Project Communication)
+// ─────────────────────────────────────
+
+model Message {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  senderId  String   @map("sender_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sender  User    @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+// ─────────────────────────────────────
+// BOOKINGS (Photography / Videography)
+// ─────────────────────────────────────
+
+model Booking {
+  id         String        @id @default(cuid())
+  customerId String        @map("customer_id")
+  serviceId  String        @map("service_id")
+  date       DateTime
+  timeSlot   String?       @map("time_slot")
+  location   String?
+  status     BookingStatus @default(REQUESTED)
+  notes      String?
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  customer User    @relation(fields: [customerId], references: [id])
+  service  Service @relation(fields: [serviceId], references: [id])
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  REQUESTED
+  CONFIRMED
+  QUOTE_SENT
+  PAID
+  SESSION_COMPLETE
+  FILES_DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+// ─────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────
+
+model Notification {
+  id         String   @id @default(cuid())
+  customerId String   @map("customer_id")
+  title      String
+  message    String
+  readStatus Boolean  @default(false) @map("read_status")
+  type       String?  // e.g. "order", "project", "payment", "booking"
+  linkUrl    String?  @map("link_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────
+
+model Review {
+  id        String   @id @default(cuid())
+  orderId   String   @map("order_id")
+  userId    String   @map("user_id")
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────
+// DIGITAL MARKETING MODULE (Section 15)
+// ─────────────────────────────────────
+
+model MarketingCampaign {
+  id            String             @id @default(cuid())
+  projectId     String             @map("project_id")
+  name          String
+  status        CampaignStatus     @default(PLANNING)
+  postsCount    Int                @default(0) @map("posts_count")
+  reelsCount    Int                @default(0) @map("reels_count")
+  campaignsCount Int               @default(0) @map("campaigns_count")
+  contentCalendar String?          @map("content_calendar")
+  resultsReport String?            @map("results_report")
+  month         String?            // e.g. "September 2026"
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("marketing_campaigns")
+}
+
+enum CampaignStatus {
+  PLANNING
+  CONTENT_CREATION
+  CLIENT_APPROVAL
+  PUBLISHED
+  RESULTS_READY
+  REPORT_SENT
+}
+
+// ─────────────────────────────────────
+// WISHLIST (Customer Dashboard)
+// ─────────────────────────────────────
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  itemType  String   @map("item_type") // "product" or "artwork"
+  itemId    String   @map("item_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, itemId])
+  @@map("wishlist_items")
+}
+
+// ─────────────────────────────────────
+// GALLERY: Artists & Artworks (from gallery.pdf)
+// ─────────────────────────────────────
+
+model Artist {
+  id                String       @id @default(cuid())
+  userId            String       @unique @map("user_id")
+  statement         String?
+  city              String       @default("Kigali")
+  payoutMethod      String       @default("MTN MoMo") @map("payout_method")
+  payoutNumber      String       @map("payout_number")
+  payoutAccountName String       @map("payout_account_name")
+  payoutLocked      Boolean      @default(false) @map("payout_locked")
+  status            ArtistStatus @default(PENDING)
+  totalGrossSales   Float        @default(0) @map("total_gross_sales")
+  commissionPaid    Float        @default(0) @map("commission_paid")
+  taxWithheld       Float        @default(0) @map("tax_withheld")
+  netPaid           Float        @default(0) @map("net_paid")
+  pendingBalance    Float        @default(0) @map("pending_balance")
+  instagram         String?
+  portfolio         String?
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id])
+  artworks Artwork[]
+  escrowOrders EscrowOrder[]
+
+  @@map("artists")
+}
+
+enum ArtistStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+model Artwork {
+  id                        String        @id @default(cuid())
+  title                     String
+  artistId                  String        @map("artist_id")
+  description               String
+  medium                    String
+  dimensions                String
+  framing                   String
+  price                     Float
+  imageFront                String        @map("image_front")
+  imageDetail               String?       @map("image_detail")
+  imageInRoom               String?       @map("image_in_room")
+  status                    ArtworkStatus @default(DRAFT)
+  year                      String?
+  certificateOfAuthenticity Boolean       @default(true) @map("certificate_of_authenticity")
+  featured                  Boolean       @default(false)
+  views                     Int           @default(0)
+  likes                     Int           @default(0)
+  weight                    String?
+  curatorNotes              String?       @map("curator_notes")
+  createdAt                 DateTime      @default(now()) @map("created_at")
+  updatedAt                 DateTime      @updatedAt @map("updated_at")
+
+  artist       Artist        @relation(fields: [artistId], references: [id])
+  escrowOrders EscrowOrder[]
+
+  @@map("artworks")
+}
+
+enum ArtworkStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  SOLD
+}
+
+model EscrowOrder {
+  id                     String           @id @default(cuid())
+  artworkId              String           @map("artwork_id")
+  artistId               String           @map("artist_id")
+  buyerName              String           @map("buyer_name")
+  buyerPhone             String           @map("buyer_phone")
+  buyerEmail             String           @map("buyer_email")
+  buyerAddress           String           @map("buyer_address")
+  buyerCity              String           @map("buyer_city")
+  grossAmount            Float            @map("gross_amount")
+  platformCommissionRate Float            @default(0.15) @map("platform_commission_rate")
+  platformCommissionFee  Float            @map("platform_commission_fee")
+  withholdingTaxRate     Float            @default(0.15) @map("withholding_tax_rate")
+  withholdingTaxAmount   Float            @map("withholding_tax_amount")
+  artistNetPayout        Float            @map("artist_net_payout")
+  status                 EscrowStatus     @default(PAYMENT_LOCK)
+  paymentMethod          String?          @map("payment_method")
+  deliveryTrackingCode   String?          @map("delivery_tracking_code")
+  deliveryConfirmedAt    DateTime?        @map("delivery_confirmed_at")
+  disputeWindowEnd       DateTime?        @map("dispute_window_end")
+  payoutCompletedAt      DateTime?        @map("payout_completed_at")
+  createdAt              DateTime         @default(now()) @map("created_at")
+  updatedAt              DateTime         @updatedAt @map("updated_at")
+
+  artwork Artwork @relation(fields: [artworkId], references: [id])
+  artist  Artist  @relation(fields: [artistId], references: [id])
+
+  @@map("escrow_orders")
+}
+
+enum EscrowStatus {
+  PAYMENT_LOCK
+  READY_FOR_PICKUP
+  IN_TRANSIT
+  DELIVERED
+  INSPECTION_WINDOW
+  DISPUTED
+  SETTLED
+  REFUNDED
+}
