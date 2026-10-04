@@ -40,7 +40,7 @@ export default function Hero() {
               href="/request-quote"
               className="px-6 py-2.5 sm:px-7 sm:py-2.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/25 hover:border-white/40 transition-all duration-200 text-xs sm:text-sm"
             >
-              Sell Products
+              Get Services
             </Link>
           </div>
 

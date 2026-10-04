@@ -45,14 +45,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Determine host origin for the portal onboarding link
-    const host = req.headers.host || "localhost:3000";
-    const protocol = req.headers["x-forwarded-proto"] || (host.includes("localhost") ? "http" : "https");
+    let origin = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+    if (!origin) {
+      const host = (req.headers["x-forwarded-host"] as string) || req.headers.host || "localhost:3000";
+      const protocol = (req.headers["x-forwarded-proto"] as string) || (host.includes("localhost") ? "http" : "https");
+      origin = `${protocol}://${host}`;
+    }
+    origin = origin.replace(/\/$/, "");
     
     // Generate secure onboarding token for the approved artist
     const { createArtistSetupToken } = await import("@/lib/artistPortalAuth");
     const setupToken = createArtistSetupToken(cleanEmail, cleanName);
-    const setupUrl = `${protocol}://${host}/artist/setup-account?email=${encodeURIComponent(cleanEmail)}&token=${setupToken}`;
-    const portalLoginUrl = `${protocol}://${host}/art-gallery/login`;
+    const setupUrl = `${origin}/artist/setup-account?email=${encodeURIComponent(cleanEmail)}&token=${setupToken}`;
+    const portalLoginUrl = `${origin}/art-gallery/login`;
 
     // Dispatch approval email with dedicated account activation link
     let emailResult: { success: boolean; messageId?: string; error?: string } = { success: false };

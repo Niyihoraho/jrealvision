@@ -34,6 +34,15 @@ function getTransporter(): nodemailer.Transporter {
   });
 }
 
+export function getAppBaseUrl(): string {
+  const url =
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "http://localhost:3000";
+  return url.replace(/\/$/, "");
+}
+
 export async function sendVerificationEmail({
   to,
   name,
@@ -374,7 +383,7 @@ export async function sendAdminArtistApplicationNotificationEmail({
 
               <!-- Action Link -->
               <div style="text-align: center; margin: 28px 0;">
-                <a href="${process.env.NEXTAUTH_URL || "http://localhost:3000"}/admin/dashboard?tab=sellers" 
+                <a href="${getAppBaseUrl()}/admin/dashboard?tab=sellers" 
                    style="display: inline-block; background-color: #128C38; color: #FFFFFF; font-size: 14px; font-weight: 800; text-decoration: none; padding: 14px 28px; border-radius: 10px; box-shadow: 0 2px 8px rgba(18, 140, 56, 0.25);">
                   Review & Approve in Admin Dashboard →
                 </a>
@@ -428,7 +437,7 @@ export async function sendArtistApprovalEmail({
   const actionUrl =
     setupUrl ||
     loginUrl ||
-    `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/artist/setup-account?email=${encodeURIComponent(to)}`;
+    `${getAppBaseUrl()}/artist/setup-account?email=${encodeURIComponent(to)}`;
 
   const html = `
 <!DOCTYPE html>
@@ -815,7 +824,7 @@ export async function sendOrderConfirmationEmail({
 
               <!-- Customer Portal CTA -->
               <div style="text-align: center; margin: 28px 0 20px 0;">
-                <a href="${process.env.NEXTAUTH_URL || "http://localhost:3000"}/my-orders" 
+                <a href="${getAppBaseUrl()}/my-orders" 
                    style="display: inline-block; background-color: #128C38; color: #FFFFFF; font-size: 13px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 2px 8px rgba(18, 140, 56, 0.2);">
                   View & Track My Order in Customer Portal →
                 </a>
@@ -1027,7 +1036,7 @@ export async function sendAdminNewOrderNotificationEmail({
 
               <!-- Admin CTA -->
               <div style="text-align: center; margin: 24px 0 12px 0;">
-                <a href="http://localhost:3000/admin/dashboard" 
+                <a href="${getAppBaseUrl()}/admin/dashboard" 
                    style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 13px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px;">
                   Open Admin Dashboard Orders →
                 </a>

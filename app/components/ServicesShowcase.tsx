@@ -37,7 +37,7 @@ const serviceSubtitles: Record<string, string> = {
   "digital-marketing": "Social Media, Ads & Campaigns",
   photography: "Studio, Products & Event Shoots",
   videography: "Cinematic 4K, Commercials & Reels",
-  branding: "Complete Corporate & NGO Packages",
+  // branding: "Complete Corporate & NGO Packages",
 };
 
 export default function ServicesShowcase() {
