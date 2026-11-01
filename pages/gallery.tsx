@@ -12,6 +12,7 @@ import {
   galleryCities,
   type Artwork,
 } from "@/lib/galleryData";
+import { resolveMediaUrl, FALLBACK_ARTWORK_IMAGE } from "@/lib/mediaUtils";
 import { Search, SlidersHorizontal, X, ArrowUpDown, Eye, Heart, ShieldCheck } from "lucide-react";
 
 export default function GalleryPage() {
@@ -505,7 +506,7 @@ export default function GalleryPage() {
                         <div className="relative aspect-[4/3] bg-[#f5f5f3] overflow-hidden">
                           <Link href={`/gallery/${art.id}`} className="block w-full h-full relative">
                             <Image
-                              src={art.images?.front || "/image/gallery/imigongo-fusion.jpg"}
+                              src={resolveMediaUrl(art.images?.front, FALLBACK_ARTWORK_IMAGE)}
                               alt={art.title}
                               fill
                               className={`object-cover group-hover:scale-105 transition-transform duration-500 ${
@@ -704,7 +705,7 @@ export default function GalleryPage() {
           >
             <div className="relative aspect-[16/10] bg-[#f5f5f3] w-full overflow-hidden rounded-t-2xl">
               <Image
-                src={quickViewArtwork.images?.front || "/image/gallery/imigongo-fusion.jpg"}
+                src={resolveMediaUrl(quickViewArtwork.images?.front, FALLBACK_ARTWORK_IMAGE)}
                 alt={quickViewArtwork.title}
                 fill
                 className="object-contain"

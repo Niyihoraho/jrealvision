@@ -9,6 +9,7 @@ import ProductCard from "@/app/components/ProductCard";
 import { useCart } from "@/app/components/CartProvider";
 import { products, companyInfo } from "@/lib/data";
 import type { ProductAttribute } from "@/lib/productAttributes";
+import { resolveMediaUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/mediaUtils";
 import {
   ShoppingCart,
   Check,
@@ -278,9 +279,12 @@ export default function ProductDetailPage() {
               {/* Main Image Container */}
               <div className="relative aspect-square rounded-3xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-md group">
                 <img
-                  src={productImages[activeImageIndex] || product.image}
+                  src={resolveMediaUrl(productImages[activeImageIndex] || product.image, FALLBACK_PRODUCT_IMAGE)}
                   alt={`${product.name} - View ${activeImageIndex + 1}`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-zoom-in"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = FALLBACK_PRODUCT_IMAGE;
+                  }}
                   onClick={() => setIsLightboxOpen(true)}
                 />
 
@@ -380,9 +384,12 @@ export default function ProductDetailPage() {
                           }`}
                         >
                           <img
-                            src={img}
+                            src={resolveMediaUrl(img, FALLBACK_PRODUCT_IMAGE)}
                             alt={`Thumbnail ${idx + 1}`}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = FALLBACK_PRODUCT_IMAGE;
+                            }}
                           />
                           {idx === 0 && (
                             <span className="absolute bottom-1 left-1 bg-slate-900/80 text-white text-[8px] font-bold uppercase tracking-wider px-1 py-0.2 rounded">
@@ -661,9 +668,12 @@ export default function ProductDetailPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={productImages[activeImageIndex] || product.image}
+                src={resolveMediaUrl(productImages[activeImageIndex] || product.image, FALLBACK_PRODUCT_IMAGE)}
                 alt={`${product.name} full view`}
                 className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = FALLBACK_PRODUCT_IMAGE;
+                }}
               />
 
               {productImages.length > 1 && (
@@ -705,7 +715,14 @@ export default function ProductDetailPage() {
                         : "border-white/20 opacity-50 hover:opacity-90"
                     }`}
                   >
-                    <img src={img} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
+                    <img
+                      src={resolveMediaUrl(img, FALLBACK_PRODUCT_IMAGE)}
+                      alt={`thumb ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = FALLBACK_PRODUCT_IMAGE;
+                      }}
+                    />
                   </button>
                 ))}
               </div>

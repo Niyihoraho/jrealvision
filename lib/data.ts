@@ -27,6 +27,13 @@ export const companyInfo = {
 // ============================================
 // PRODUCT CATEGORIES (Shop)
 // ============================================
+import {
+  resolveMediaUrl,
+  FALLBACK_PRODUCT_IMAGE,
+  FALLBACK_SERVICE_IMAGE,
+  FALLBACK_ARTWORK_IMAGE,
+} from "./mediaUtils";
+
 export interface ProductCategory {
   id: string;
   name: string;
@@ -35,18 +42,18 @@ export interface ProductCategory {
 }
 
 export const productCategories: ProductCategory[] = [
-  { id: "t-shirts", name: "T-Shirts", image: "/image/shopping_merch.jpg", productCount: 12 },
-  { id: "business-cards", name: "Business Cards", image: "/image/printing_products.jpg", productCount: 8 },
-  { id: "banners", name: "Banners", image: "/image/printing_products.jpg", productCount: 6 },
-  { id: "mugs", name: "Mugs", image: "/image/shopping_merch.jpg", productCount: 5 },
-  { id: "stickers", name: "Stickers", image: "/image/graphic design tool.jpg", productCount: 10 },
-  { id: "posters", name: "Posters", image: "/image/graphic design tool.jpg", productCount: 7 },
-  { id: "flyers", name: "Flyers", image: "/image/printing_products.jpg", productCount: 9 },
-  { id: "rollup-banners", name: "Roll-up Banners", image: "/image/printing_products.jpg", productCount: 4 },
-  { id: "invitations", name: "Invitations", image: "/image/printing_products.jpg", productCount: 6 },
-  { id: "notebooks", name: "Branded Notebooks", image: "/image/shopping_merch.jpg", productCount: 5 },
-  { id: "frames", name: "Frames", image: "/image/graphic design tool.jpg", productCount: 4 },
-  { id: "promotional", name: "Promotional Products", image: "/image/shopping_merch.jpg", productCount: 15 },
+  { id: "t-shirts", name: "T-Shirts", image: resolveMediaUrl("/image/shopping_merch.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 12 },
+  { id: "business-cards", name: "Business Cards", image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 8 },
+  { id: "banners", name: "Banners", image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 6 },
+  { id: "mugs", name: "Mugs", image: resolveMediaUrl("/image/shopping_merch.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 5 },
+  { id: "stickers", name: "Stickers", image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 10 },
+  { id: "posters", name: "Posters", image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 7 },
+  { id: "flyers", name: "Flyers", image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 9 },
+  { id: "rollup-banners", name: "Roll-up Banners", image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 4 },
+  { id: "invitations", name: "Invitations", image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 6 },
+  { id: "notebooks", name: "Branded Notebooks", image: resolveMediaUrl("/image/shopping_merch.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 5 },
+  { id: "frames", name: "Frames", image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 4 },
+  { id: "promotional", name: "Promotional Products", image: resolveMediaUrl("/image/shopping_merch.jpg", FALLBACK_PRODUCT_IMAGE), productCount: 15 },
 ];
 
 // ============================================
@@ -306,7 +313,7 @@ export const services: Service[] = [
     description:
       "Shop branded corporate merchandise, custom apparel, drinkware, notebooks, and personalized products delivered to your door.",
     icon: "ShoppingBag",
-    image: "/image/shopping_merch.jpg",
+    image: resolveMediaUrl("/image/shopping_merch.jpg", FALLBACK_PRODUCT_IMAGE),
     features: [
       "Custom T-Shirts & Polos",
       "Branded Mugs & Bottles",
@@ -329,7 +336,7 @@ export const services: Service[] = [
     description:
       "Discover and buy original Rwandan paintings, Imigongo heritage reliefs, fine canvas art, and sculptures from renowned artists.",
     icon: "Brush",
-    image: "/image/gallery/imigongo-fusion.jpg",
+    image: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE),
     features: [
       "Original Canvas Art",
       "Sacred Imigongo Patterns",
@@ -352,7 +359,7 @@ export const services: Service[] = [
     description:
       "Professional design services from logos to complete brand identities. We create visuals that communicate your message.",
     icon: "Palette",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_SERVICE_IMAGE),
     features: [
       "Logo Design",
       "Brand Identity",
@@ -375,7 +382,7 @@ export const services: Service[] = [
     description:
       "High-quality printing for all your business and personal needs. From business cards to large format banners.",
     icon: "Printer",
-    image: "/image/printing_products.jpg",
+    image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_SERVICE_IMAGE),
     features: [
       "Business Cards",
       "Brochures & Flyers",
@@ -398,7 +405,7 @@ export const services: Service[] = [
     description:
       "We don't just design your product — we help you sell it. Complete digital marketing solutions.",
     icon: "TrendingUp",
-    image: "/image/digital_marketing.jpg",
+    image: resolveMediaUrl("/image/digital_marketing.jpg", FALLBACK_SERVICE_IMAGE),
     features: [
       "Social Media Management",
       "Content Creation",
@@ -421,7 +428,7 @@ export const services: Service[] = [
     description:
       "Professional photography services for products, events, corporate, and more. Capture your brand beautifully.",
     icon: "Camera",
-    image: "/image/comera extensions.jpg",
+    image: resolveMediaUrl("/image/comera extensions.jpg", FALLBACK_SERVICE_IMAGE),
     features: [
       "Product Photography",
       "Corporate Photography",
@@ -444,7 +451,7 @@ export const services: Service[] = [
     description:
       "From promotional videos to social media reels. We create engaging video content that drives results.",
     icon: "Video",
-    image: "/image/videodeck.jpg",
+    image: resolveMediaUrl("/image/videodeck.jpg", FALLBACK_SERVICE_IMAGE),
     features: [
       "Product Videos",
       "Promotional Videos",
@@ -467,7 +474,7 @@ export const services: Service[] = [
     description:
       "Complete branding packages that connect all our services. Launch your business with a professional identity.",
     icon: "Star",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_SERVICE_IMAGE),
     features: [
       "Logo Design",
       "Business Cards",
@@ -624,42 +631,42 @@ export const portfolioItems: PortfolioItem[] = [
     id: "portfolio-1",
     title: "Restaurant Branding",
     category: "Branding",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Complete brand identity for a Kigali restaurant",
   },
   {
     id: "portfolio-2",
     title: "Corporate Photography",
     category: "Photography",
-    image: "/image/comera extensions.jpg",
+    image: resolveMediaUrl("/image/comera extensions.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Professional corporate photoshoot",
   },
   {
     id: "portfolio-3",
     title: "Promotional Video",
     category: "Videography",
-    image: "/image/videodeck.jpg",
+    image: resolveMediaUrl("/image/videodeck.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Product promotional video for social media",
   },
   {
     id: "portfolio-4",
     title: "Event Banners",
     category: "Printing",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Large format event banners and signage",
   },
   {
     id: "portfolio-5",
     title: "Social Media Campaign",
     category: "Marketing",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/digital_marketing.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Monthly social media marketing campaign",
   },
   {
     id: "portfolio-6",
     title: "Product Photography",
     category: "Photography",
-    image: "/image/comera extensions.jpg",
+    image: resolveMediaUrl("/service/Product Photography.jpeg", FALLBACK_SERVICE_IMAGE),
     description: "E-commerce product photography session",
   },
 ];

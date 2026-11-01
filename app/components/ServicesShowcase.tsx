@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { services } from "@/lib/data";
+import { resolveMediaUrl, FALLBACK_SERVICE_IMAGE } from "@/lib/mediaUtils";
 import {
   Palette,
   Printer,
@@ -145,7 +146,7 @@ export default function ServicesShowcase() {
               >
                 {/* Background Image */}
                 <Image
-                  src={service.image}
+                  src={resolveMediaUrl(service.image, FALLBACK_SERVICE_IMAGE)}
                   alt={service.title}
                   fill
                   sizes="(max-width: 640px) 275px, (max-width: 1024px) 320px, 350px"

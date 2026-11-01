@@ -6,6 +6,7 @@ import Link from "next/link";
 import { MapPin, Plus, Check } from "lucide-react";
 import { useCart } from "./CartProvider";
 import { productCategories, type Product } from "@/lib/data";
+import { resolveMediaUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/mediaUtils";
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
@@ -37,7 +38,7 @@ export default function ProductCard({ product }: { product: Product }) {
         className="relative aspect-square sm:aspect-[4/3] w-full overflow-hidden bg-gray-50 block"
       >
         <Image
-          src={product.image}
+          src={resolveMediaUrl(product.image, FALLBACK_PRODUCT_IMAGE)}
           alt={product.name}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"

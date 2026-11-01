@@ -52,6 +52,8 @@ import {
   AlertCircle,
   Bell,
   BellOff,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import {
   ServiceCardItem,
@@ -69,6 +71,12 @@ import {
   getStoredArtistApplications,
   updateArtistApplicationStatus,
 } from "@/lib/artistApplications";
+import {
+  resolveMediaUrl,
+  FALLBACK_SERVICE_IMAGE,
+  FALLBACK_PRODUCT_IMAGE,
+  FALLBACK_ARTWORK_IMAGE,
+} from "@/lib/mediaUtils";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -137,11 +145,11 @@ const PRODUCT_CATEGORY_OPTIONS = [
 ];
 
 const ARTWORK_IMAGE_PRESETS = [
-  { label: "Imigongo Modern Fusion", url: "/image/gallery/imigongo-fusion.jpg" },
-  { label: "Thousand Hills Landscape", url: "/image/gallery/thousand-hills.jpg" },
-  { label: "Kigali Urban Rhythm", url: "/image/gallery/kigali-rhythm.jpg" },
-  { label: "Mountain Gorilla Study", url: "/image/gallery/mountain-gorilla.jpg" },
-  { label: "African Woman Portrait", url: "/image/gallery/african-woman-portrait.jpg" },
+  { label: "Imigongo Modern Fusion", url: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE) },
+  { label: "Thousand Hills Landscape", url: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE) },
+  { label: "Kigali Urban Rhythm", url: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE) },
+  { label: "Mountain Gorilla Study", url: resolveMediaUrl("/image/gallery/mountain-gorilla.jpg", FALLBACK_ARTWORK_IMAGE) },
+  { label: "African Woman Portrait", url: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE) },
 ];
 
 const PRODUCT_IMAGE_PRESETS = [
@@ -244,7 +252,7 @@ const INITIAL_ADMIN_ARTWORKS: ArtworkListing[] = [
     year: "2026",
     weight: "4.5 kg",
     certificateOfAuthenticity: true,
-    image: "/image/gallery/imigongo-fusion.jpg",
+    image: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE),
     description: "Contemporary interpretation of sacred Rwandan Imigongo spiral patterns fused with organic earthy pigments.",
     status: "Published",
     sales: 2,
@@ -262,7 +270,7 @@ const INITIAL_ADMIN_ARTWORKS: ArtworkListing[] = [
     year: "2025",
     weight: "5.2 kg",
     certificateOfAuthenticity: true,
-    image: "/image/gallery/thousand-hills.jpg",
+    image: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
     description: "Large scale impressionist landscape capturing dawn over the Virunga volcanic peaks.",
     status: "Published",
     sales: 1,
@@ -280,7 +288,7 @@ const INITIAL_ADMIN_ARTWORKS: ArtworkListing[] = [
     year: "2026",
     weight: "2.8 kg",
     certificateOfAuthenticity: true,
-    image: "/image/gallery/kigali-rhythm.jpg",
+    image: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
     description: "Vibrant urban nightlife study rendered with indigenous sisal fiber textures and acrylic pigments.",
     status: "Published",
     sales: 0,
@@ -342,12 +350,12 @@ const PORTFOLIO_CATEGORY_OPTIONS: AdminPortfolioItem["category"][] = [
 ];
 
 const PORTFOLIO_IMAGE_PRESETS = [
-  { label: "Graphic Design & Branding", url: "/image/graphic design tool.jpg" },
-  { label: "Photography & Studio Camera", url: "/image/comera extensions.jpg" },
-  { label: "Videography & Film Production", url: "/image/videodeck.jpg" },
-  { label: "Printing & Merch Products", url: "/image/printing_products.jpg" },
-  { label: "Digital Marketing & Campaigns", url: "/image/digital_marketing.jpg" },
-  { label: "Curated Art & Imigongo", url: "/image/gallery/imigongo-fusion.jpg" },
+  { label: "Graphic Design & Branding", url: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_SERVICE_IMAGE) },
+  { label: "Photography & Studio Camera", url: resolveMediaUrl("/image/comera extensions.jpg", FALLBACK_SERVICE_IMAGE) },
+  { label: "Videography & Film Production", url: resolveMediaUrl("/image/videodeck.jpg", FALLBACK_SERVICE_IMAGE) },
+  { label: "Printing & Merch Products", url: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_SERVICE_IMAGE) },
+  { label: "Digital Marketing & Campaigns", url: resolveMediaUrl("/image/digital_marketing.jpg", FALLBACK_SERVICE_IMAGE) },
+  { label: "Curated Art & Imigongo", url: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE) },
 ];
 
 const SERVICE_TYPE_PRESETS: Record<"Photography" | "Videography" | "Print", string[]> = {
@@ -540,7 +548,7 @@ const INITIAL_PORTFOLIO: AdminPortfolioItem[] = [
     title: "Kigali Bistro Brand Identity",
     category: "Branding",
     clientName: "Patrick Mugisha (Kigali Bistro)",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Complete corporate identity, menu design, employee uniforms, and storefront signage.",
     year: "2026",
     featured: true,
@@ -551,7 +559,7 @@ const INITIAL_PORTFOLIO: AdminPortfolioItem[] = [
     title: "Bank Leadership Corporate Portraits",
     category: "Photography",
     clientName: "Bank of Kigali",
-    image: "/image/comera extensions.jpg",
+    image: resolveMediaUrl("/image/comera extensions.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Studio executive headshots and annual report visual collection for board members and directors.",
     year: "2025",
     featured: true,
@@ -562,7 +570,7 @@ const INITIAL_PORTFOLIO: AdminPortfolioItem[] = [
     title: "Visit Rwanda Tourism Commercial",
     category: "Videography",
     clientName: "Rwanda Tourism Board",
-    image: "/image/videodeck.jpg",
+    image: resolveMediaUrl("/image/videodeck.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Cinematic 4K aerial documentary showcasing national parks, gorilla trekking, and cultural monuments.",
     year: "2026",
     featured: true,
@@ -573,7 +581,7 @@ const INITIAL_PORTFOLIO: AdminPortfolioItem[] = [
     title: "Youth Connekt Africa Outdoor Signage",
     category: "Printing",
     clientName: "Youth Connekt Africa",
-    image: "/image/printing_products.jpg",
+    image: resolveMediaUrl("/image/printing_products.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Large scale PVC banners, stage backdrops, 1200+ badges, and stadium perimeter graphics.",
     year: "2025",
     featured: false,
@@ -584,7 +592,7 @@ const INITIAL_PORTFOLIO: AdminPortfolioItem[] = [
     title: "TechHub Kigali Digital Growth Campaign",
     category: "Marketing",
     clientName: "TechHub Kigali",
-    image: "/image/digital_marketing.jpg",
+    image: resolveMediaUrl("/image/digital_marketing.jpg", FALLBACK_SERVICE_IMAGE),
     description: "End-to-end 3-month digital campaign driving 350+ startup registrations with high-converting social ads.",
     year: "2026",
     featured: false,
@@ -595,7 +603,7 @@ const INITIAL_PORTFOLIO: AdminPortfolioItem[] = [
     title: "Artisanal Rwandan Coffee Packaging",
     category: "Branding",
     clientName: "Rwanda Bean Collective",
-    image: "/image/graphic design tool.jpg",
+    image: resolveMediaUrl("/image/graphic design tool.jpg", FALLBACK_SERVICE_IMAGE),
     description: "Eco-friendly kraft paper pouches with foil-stamped Imigongo embossed patterns for European export.",
     year: "2026",
     featured: true,
@@ -855,9 +863,12 @@ export default function AdminDashboardPage() {
     description: "",
     priceOrRate: "",
     badge: "",
-    image: AVAILABLE_SERVICE_IMAGES[0]?.path || "/service/Minimal Brand Identity Design With Maximum Impact.jpeg",
+    image: AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE,
     popular: false,
   });
+  const [isUploadingCardImage, setIsUploadingCardImage] = useState(false);
+  const [isUploadingArtImage, setIsUploadingArtImage] = useState(false);
+  const [isUploadingPortfolioImage, setIsUploadingPortfolioImage] = useState(false);
 
   // ─── Brand Bundles Management (CRUD: Startup Starter, Business Growth, Enterprise 360) ───
   const [brandBundlesList, setBrandBundlesList] = useState<BrandBundleItem[]>(INITIAL_BRAND_BUNDLES);
@@ -1267,6 +1278,81 @@ export default function AdminDashboardPage() {
         }
       })
       .catch((err) => console.warn("[users load warning]:", err));
+
+    // ── Fetch curated artworks from Supabase DB or local storage fallback ──
+    fetch("/api/artworks")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
+          const mappedArt: ArtworkListing[] = data.artworks.map((a: any) => ({
+            id: a.id,
+            type: "ARTWORK",
+            title: a.title,
+            artistName: a.artistName || "JREAL Curated Studio",
+            artistCity: a.artistCity || "Kigali",
+            medium: a.medium || "Acrylic on Canvas",
+            dimensions: a.dimensions || "100 x 80 cm",
+            framing: a.framing || "Framed (Solid Wood)",
+            price: Number(a.price) || 0,
+            year: a.year || "2026",
+            weight: a.weight || "3.5 kg",
+            certificateOfAuthenticity: a.certificateOfAuthenticity !== false,
+            image: resolveMediaUrl(a.images?.front || a.image, FALLBACK_ARTWORK_IMAGE),
+            description: a.description || "",
+            status: a.status || "Published",
+            sales: 0,
+          }));
+          setArtworks(mappedArt);
+        } else {
+          try {
+            const rawArt = localStorage.getItem("jreal_admin_artworks_v1");
+            if (rawArt) {
+              const parsed = JSON.parse(rawArt);
+              if (Array.isArray(parsed) && parsed.length > 0) setArtworks(parsed);
+            }
+          } catch {}
+        }
+      })
+      .catch(() => {
+        try {
+          const rawArt = localStorage.getItem("jreal_admin_artworks_v1");
+          if (rawArt) {
+            const parsed = JSON.parse(rawArt);
+            if (Array.isArray(parsed) && parsed.length > 0) setArtworks(parsed);
+          }
+        } catch {}
+      });
+
+    // ── Load persisted bookings, staff members & portfolio showcases ──
+    try {
+      const rawBk = localStorage.getItem("jreal_service_bookings");
+      if (rawBk) {
+        const parsed = JSON.parse(rawBk);
+        if (Array.isArray(parsed) && parsed.length > 0) setBookings(parsed);
+      }
+    } catch {}
+
+    try {
+      const rawStaff = localStorage.getItem("jreal_staff_members");
+      if (rawStaff) {
+        const parsed = JSON.parse(rawStaff);
+        if (Array.isArray(parsed) && parsed.length > 0) setStaffList(parsed);
+      }
+    } catch {}
+
+    try {
+      const rawPort = localStorage.getItem("jreal_portfolio_items");
+      if (rawPort) {
+        const parsed = JSON.parse(rawPort);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const migrated = parsed.map((p: any) => ({
+            ...p,
+            image: resolveMediaUrl(p.image, PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE),
+          }));
+          setPortfolioItemsList(migrated);
+        }
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -1629,19 +1715,64 @@ export default function AdminDashboardPage() {
         setListingModalError("Please enter artwork title and price.");
         return;
       }
+      const resolvedArtImage = resolveMediaUrl(artForm.image, FALLBACK_ARTWORK_IMAGE);
+      const artPayload = {
+        ...artForm,
+        image: resolvedArtImage,
+        price: Number(artForm.price),
+      };
+
       if (editingId) {
-        setArtworks((prev) =>
-          prev.map((a) => (a.id === editingId ? { ...a, ...artForm, price: Number(artForm.price) } : a))
-        );
+        setArtworks((prev) => {
+          const updated = prev.map((a) =>
+            a.id === editingId ? { ...a, ...artPayload } : a
+          );
+          try {
+            localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+        fetch("/api/artworks", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingId, ...artPayload }),
+        }).catch((err) => console.warn("Failed to update artwork in DB:", err));
       } else {
+        const tempId = `aart-${Date.now()}`;
         const newA: ArtworkListing = {
-          id: `aart-${Date.now()}`,
+          id: tempId,
           type: "ARTWORK",
-          ...artForm,
-          price: Number(artForm.price),
+          ...artPayload,
           sales: 0,
         };
-        setArtworks((prev) => [newA, ...prev]);
+        setArtworks((prev) => {
+          const updated = [newA, ...prev];
+          try {
+            localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        fetch("/api/artworks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newA),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (data?.artwork) {
+              setArtworks((prev) => {
+                const updated = prev.map((a) =>
+                  a.id === tempId ? { ...a, id: data.artwork.id } : a
+                );
+                try {
+                  localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+                } catch {}
+                return updated;
+              });
+            }
+          })
+          .catch((err) => console.warn("Failed to create artwork in DB:", err));
       }
     }
     setIsModalOpen(false);
@@ -1663,12 +1794,27 @@ export default function AdminDashboardPage() {
       variant: "danger",
       onConfirm: () => {
         if (type === "PRODUCT") {
-          setProducts((prev) => prev.filter((p) => p.id !== id));
+          setProducts((prev) => {
+            const updated = prev.filter((p) => p.id !== id);
+            try {
+              localStorage.setItem("jreal_admin_products_v1", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
           fetch(`/api/products?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch((err) =>
             console.warn("Delete product error:", err)
           );
         } else {
-          setArtworks((prev) => prev.filter((a) => a.id !== id));
+          setArtworks((prev) => {
+            const updated = prev.filter((a) => a.id !== id);
+            try {
+              localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+          fetch(`/api/artworks?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch((err) =>
+            console.warn("Delete artwork error:", err)
+          );
         }
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       },
@@ -1678,19 +1824,34 @@ export default function AdminDashboardPage() {
   const handleToggleListingStatus = (id: string, type: "PRODUCT" | "ARTWORK") => {
     if (type === "PRODUCT") {
       const current = products.find((p) => p.id === id);
-      const newStatus = current?.status === "Active" ? "Draft" : "Active";
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
-      );
+      const newStatus: "Active" | "Draft" = current?.status === "Active" ? "Draft" : "Active";
+      setProducts((prev) => {
+        const updated = prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p));
+        try {
+          localStorage.setItem("jreal_admin_products_v1", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
       fetch("/api/products", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, active: newStatus === "Active" }),
       }).catch((err) => console.warn("Toggle product status error:", err));
     } else {
-      setArtworks((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status: a.status === "Published" ? "Draft" : "Published" } : a))
-      );
+      const current = artworks.find((a) => a.id === id);
+      const newStatus: "Draft" | "Published" = current?.status === "Published" ? "Draft" : "Published";
+      setArtworks((prev) => {
+        const updated = prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a));
+        try {
+          localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+      fetch("/api/artworks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: newStatus }),
+      }).catch((err) => console.warn("Toggle artwork status error:", err));
     }
   };
 
@@ -1795,8 +1956,8 @@ export default function AdminDashboardPage() {
     const assignedStaffName = assignedStaff ? assignedStaff.name : bookingForm.assignedStaffName;
 
     if (editingBookingId) {
-      setBookings((prev) =>
-        prev.map((b) =>
+      setBookings((prev) => {
+        const updated = prev.map((b) =>
           b.id === editingBookingId
             ? {
                 ...b,
@@ -1805,8 +1966,12 @@ export default function AdminDashboardPage() {
                 price: Number(bookingForm.price),
               }
             : b
-        )
-      );
+        );
+        try {
+          localStorage.setItem("jreal_service_bookings", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
       fetch("/api/bookings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1825,7 +1990,13 @@ export default function AdminDashboardPage() {
         assignedStaffName,
         price: Number(bookingForm.price),
       };
-      setBookings((prev) => [newB, ...prev]);
+      setBookings((prev) => {
+        const updated = [newB, ...prev];
+        try {
+          localStorage.setItem("jreal_service_bookings", JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
 
       fetch("/api/bookings", {
         method: "POST",
@@ -1844,9 +2015,13 @@ export default function AdminDashboardPage() {
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (data?.booking) {
-            setBookings((prev) =>
-              prev.map((b) => (b.id === tempId ? { ...b, id: data.booking.id } : b))
-            );
+            setBookings((prev) => {
+              const updated = prev.map((b) => (b.id === tempId ? { ...b, id: data.booking.id } : b));
+              try {
+                localStorage.setItem("jreal_service_bookings", JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
           }
         })
         .catch((err) => console.warn("Create booking error:", err));
@@ -1865,7 +2040,13 @@ export default function AdminDashboardPage() {
       confirmLabel: "Remove Booking",
       variant: "danger",
       onConfirm: () => {
-        setBookings((prev) => prev.filter((b) => b.id !== id));
+        setBookings((prev) => {
+          const updated = prev.filter((b) => b.id !== id);
+          try {
+            localStorage.setItem("jreal_service_bookings", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
         fetch(`/api/bookings?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch((err) =>
           console.warn("Delete booking error:", err)
         );
@@ -1875,9 +2056,13 @@ export default function AdminDashboardPage() {
   };
 
   const handleUpdateBookingStatus = (id: string, status: ServiceBooking["status"]) => {
-    setBookings((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, status } : b))
-    );
+    setBookings((prev) => {
+      const updated = prev.map((b) => (b.id === id ? { ...b, status } : b));
+      try {
+        localStorage.setItem("jreal_service_bookings", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     fetch("/api/bookings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -1887,9 +2072,13 @@ export default function AdminDashboardPage() {
 
   // ─── Orders Handlers ────────────────────────────────────────────────────────
   const handleUpdateOrderStatus = (orderId: string, status: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
-    );
+    setOrders((prev) => {
+      const updated = prev.map((o) => (o.id === orderId ? { ...o, status } : o));
+      try {
+        localStorage.setItem("jreal_recent_orders", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     fetch("/api/orders", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -1976,18 +2165,23 @@ export default function AdminDashboardPage() {
       setStaffModalError("Please provide staff name and role.");
       return;
     }
-    if (editingStaffId) {
-      setStaffList((prev) =>
-        prev.map((s) => (s.id === editingStaffId ? { ...s, ...staffForm } : s))
-      );
-    } else {
-      const newStaff: StaffMember = {
-        id: `staff-${Date.now()}`,
-        ...staffForm,
-        activeBookings: 0,
-      };
-      setStaffList((prev) => [...prev, newStaff]);
-    }
+    setStaffList((prev) => {
+      let updated: StaffMember[];
+      if (editingStaffId) {
+        updated = prev.map((s) => (s.id === editingStaffId ? { ...s, ...staffForm } : s));
+      } else {
+        const newStaff: StaffMember = {
+          id: `staff-${Date.now()}`,
+          ...staffForm,
+          activeBookings: 0,
+        };
+        updated = [...prev, newStaff];
+      }
+      try {
+        localStorage.setItem("jreal_staff_members", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     setIsStaffModalOpen(false);
     setEditingStaffId(null);
     setStaffModalError(null);
@@ -2002,15 +2196,21 @@ export default function AdminDashboardPage() {
       confirmLabel: "Remove Staff",
       variant: "danger",
       onConfirm: () => {
-        setStaffList((prev) => prev.filter((s) => s.id !== id));
+        setStaffList((prev) => {
+          const updated = prev.filter((s) => s.id !== id);
+          try {
+            localStorage.setItem("jreal_staff_members", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       },
     });
   };
 
   const handleToggleStaffStatus = (id: string) => {
-    setStaffList((prev) =>
-      prev.map((s) => {
+    setStaffList((prev) => {
+      const updated = prev.map((s) => {
         if (s.id !== id) return s;
         const nextStatus: StaffMember["status"] =
           s.status === "Available"
@@ -2021,8 +2221,12 @@ export default function AdminDashboardPage() {
             ? "On Leave"
             : "Available";
         return { ...s, status: nextStatus };
-      })
-    );
+      });
+      try {
+        localStorage.setItem("jreal_staff_members", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   // ─── Portfolio CRUD Handlers ────────────────────────────────────────────────
@@ -2034,7 +2238,7 @@ export default function AdminDashboardPage() {
       title: "",
       category: "Branding",
       clientName: "",
-      image: "/image/graphic design tool.jpg",
+      image: PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE,
       description: "",
       year: new Date().getFullYear().toString(),
       featured: false,
@@ -2050,7 +2254,7 @@ export default function AdminDashboardPage() {
       title: p.title,
       category: p.category,
       clientName: p.clientName,
-      image: p.image,
+      image: resolveMediaUrl(p.image, PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE),
       description: p.description,
       year: p.year,
       featured: p.featured,
@@ -2065,17 +2269,27 @@ export default function AdminDashboardPage() {
       setPortfolioModalError("Please provide project title and client name.");
       return;
     }
-    if (editingPortfolioId) {
-      setPortfolioItemsList((prev) =>
-        prev.map((p) => (p.id === editingPortfolioId ? { ...p, ...portfolioForm } : p))
-      );
-    } else {
-      const newPort: AdminPortfolioItem = {
-        id: `port-${Date.now()}`,
-        ...portfolioForm,
-      };
-      setPortfolioItemsList((prev) => [newPort, ...prev]);
-    }
+    const resolvedPortImage = resolveMediaUrl(portfolioForm.image, PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE);
+    const finalPort = {
+      ...portfolioForm,
+      image: resolvedPortImage,
+    };
+    setPortfolioItemsList((prev) => {
+      let updated: AdminPortfolioItem[];
+      if (editingPortfolioId) {
+        updated = prev.map((p) => (p.id === editingPortfolioId ? { ...p, ...finalPort } : p));
+      } else {
+        const newPort: AdminPortfolioItem = {
+          id: `port-${Date.now()}`,
+          ...finalPort,
+        };
+        updated = [newPort, ...prev];
+      }
+      try {
+        localStorage.setItem("jreal_portfolio_items", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     setIsPortfolioModalOpen(false);
     setEditingPortfolioId(null);
     setPortfolioModalError(null);
@@ -2090,27 +2304,187 @@ export default function AdminDashboardPage() {
       confirmLabel: "Delete Project",
       variant: "danger",
       onConfirm: () => {
-        setPortfolioItemsList((prev) => prev.filter((p) => p.id !== id));
+        setPortfolioItemsList((prev) => {
+          const updated = prev.filter((p) => p.id !== id);
+          try {
+            localStorage.setItem("jreal_portfolio_items", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       },
     });
   };
 
   const handleTogglePortfolioStatus = (id: string) => {
-    setPortfolioItemsList((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, status: p.status === "Published" ? "Draft" : "Published" } : p
-      )
-    );
+    setPortfolioItemsList((prev) => {
+      const updated = prev.map((p) => {
+        if (p.id !== id) return p;
+        const nextStatus: "Draft" | "Published" = p.status === "Published" ? "Draft" : "Published";
+        return { ...p, status: nextStatus };
+      });
+      try {
+        localStorage.setItem("jreal_portfolio_items", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   const handleTogglePortfolioFeatured = (id: string) => {
-    setPortfolioItemsList((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, featured: !p.featured } : p))
-    );
+    setPortfolioItemsList((prev) => {
+      const updated = prev.map((p) => (p.id === id ? { ...p, featured: !p.featured } : p));
+      try {
+        localStorage.setItem("jreal_portfolio_items", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   };
 
   // ─── Service Cards CRUD Handlers ───
+  const handleUploadCardImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCardImage(true);
+    setCardModalError(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          // Instant visual preview before server response
+          setCardForm((prev) => ({ ...prev, image: base64 }));
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: base64,
+              filename: file.name,
+              folder: "jreal/services",
+            }),
+          });
+          const data = await res.json();
+          if (data.url) {
+            setCardForm((prev) => ({ ...prev, image: data.url }));
+          } else {
+            throw new Error(data.error || "Upload failed");
+          }
+        } catch (err: any) {
+          setCardModalError(err.message || "Failed to upload image to server.");
+        } finally {
+          setIsUploadingCardImage(false);
+          e.target.value = "";
+        }
+      };
+      reader.onerror = () => {
+        setCardModalError("Failed to read image file from disk.");
+        setIsUploadingCardImage(false);
+        e.target.value = "";
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error("Card image upload failed:", err);
+      setCardModalError("Failed to process image file.");
+      setIsUploadingCardImage(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleUploadArtImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingArtImage(true);
+    setListingModalError(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          // Instant visual preview
+          setArtForm((prev) => ({ ...prev, image: base64 }));
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: base64,
+              filename: file.name,
+              folder: "jreal/gallery",
+            }),
+          });
+          const data = await res.json();
+          if (data.url) {
+            setArtForm((prev) => ({ ...prev, image: data.url }));
+          } else {
+            throw new Error(data.error || "Upload failed");
+          }
+        } catch (err: any) {
+          setListingModalError(err.message || "Failed to upload artwork photo.");
+        } finally {
+          setIsUploadingArtImage(false);
+          e.target.value = "";
+        }
+      };
+      reader.onerror = () => {
+        setListingModalError("Failed to read artwork image file.");
+        setIsUploadingArtImage(false);
+        e.target.value = "";
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error("Art image upload failed:", err);
+      setListingModalError("Failed to process image file.");
+      setIsUploadingArtImage(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleUploadPortfolioImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingPortfolioImage(true);
+    setPortfolioModalError(null);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          // Instant visual preview
+          setPortfolioForm((prev) => ({ ...prev, image: base64 }));
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: base64,
+              filename: file.name,
+              folder: "jreal/portfolio",
+            }),
+          });
+          const data = await res.json();
+          if (data.url) {
+            setPortfolioForm((prev) => ({ ...prev, image: data.url }));
+          } else {
+            throw new Error(data.error || "Upload failed");
+          }
+        } catch (err: any) {
+          setPortfolioModalError(err.message || "Failed to upload portfolio showcase image.");
+        } finally {
+          setIsUploadingPortfolioImage(false);
+          e.target.value = "";
+        }
+      };
+      reader.onerror = () => {
+        setPortfolioModalError("Failed to read image file.");
+        setIsUploadingPortfolioImage(false);
+        e.target.value = "";
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error("Portfolio image upload failed:", err);
+      setPortfolioModalError("Failed to process image file.");
+      setIsUploadingPortfolioImage(false);
+      e.target.value = "";
+    }
+  };
+
   const openAddServiceCard = (defaultCat?: ServiceCardItem["category"]) => {
     setEditingCardId(null);
     setCardModalError(null);
@@ -2125,9 +2499,7 @@ export default function AdminDashboardPage() {
       description: "",
       priceOrRate: "",
       badge: "",
-      image:
-        AVAILABLE_SERVICE_IMAGES[0]?.path ||
-        "/service/Minimal Brand Identity Design With Maximum Impact.jpeg",
+      image: AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE,
       popular: false,
     });
     setIsServiceCardModalOpen(true);
@@ -2136,13 +2508,14 @@ export default function AdminDashboardPage() {
   const openEditServiceCard = (card: ServiceCardItem) => {
     setEditingCardId(card.id);
     setCardModalError(null);
+    const resolvedImg = resolveMediaUrl(card.image, AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE);
     setCardForm({
       category: card.category,
       title: card.title,
       description: card.description,
       priceOrRate: card.priceOrRate || "",
       badge: card.badge || "",
-      image: card.image || AVAILABLE_SERVICE_IMAGES[0]?.path || "",
+      image: resolvedImg,
       popular: !!card.popular,
     });
     setIsServiceCardModalOpen(true);
@@ -2154,15 +2527,20 @@ export default function AdminDashboardPage() {
       setCardModalError("Please provide a card title.");
       return;
     }
+    const resolvedImage = resolveMediaUrl(cardForm.image, AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE);
+    const cardData = {
+      ...cardForm,
+      image: resolvedImage,
+    };
     let updated: ServiceCardItem[];
     if (editingCardId) {
       updated = serviceCardsList.map((c) =>
-        c.id === editingCardId ? { ...c, ...cardForm } : c
+        c.id === editingCardId ? { ...c, ...cardData } : c
       );
     } else {
       const newCard: ServiceCardItem = {
         id: `card-${Date.now()}`,
-        ...cardForm,
+        ...cardData,
       };
       updated = [newCard, ...serviceCardsList];
     }
@@ -4014,9 +4392,13 @@ export default function AdminDashboardPage() {
                       {/* Image Thumbnail with Overlay badges */}
                       <div className="relative aspect-4/3 bg-slate-100 overflow-hidden">
                         <img
-                          src={p.image}
+                          src={resolveMediaUrl(p.image, PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE)}
                           alt={p.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE;
+                          }}
                         />
                         <div className="absolute top-2.5 left-2.5 bg-slate-950/70 backdrop-blur-xs text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                           {p.category}
@@ -4319,9 +4701,12 @@ export default function AdminDashboardPage() {
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-3">
                               <img
-                                src={p.image}
+                                src={resolveMediaUrl(p.image, FALLBACK_PRODUCT_IMAGE)}
                                 alt={p.title}
                                 className="w-12 h-12 object-cover border border-slate-200 rounded-lg shrink-0 bg-slate-100"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = FALLBACK_PRODUCT_IMAGE;
+                                }}
                               />
                               <div>
                                 <span className="font-semibold text-slate-900 block">{p.title}</span>
@@ -4488,9 +4873,12 @@ export default function AdminDashboardPage() {
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-3">
                               <img
-                                src={a.image}
+                                src={resolveMediaUrl(a.image, FALLBACK_ARTWORK_IMAGE)}
                                 alt={a.title}
                                 className="w-12 h-14 object-cover border border-slate-200 rounded-lg shrink-0 bg-slate-100 shadow-2xs"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src = FALLBACK_ARTWORK_IMAGE;
+                                }}
                               />
                               <div>
                                 <span className="font-semibold text-slate-900 block">{a.title}</span>
@@ -5267,13 +5655,16 @@ export default function AdminDashboardPage() {
                         <div className="relative w-full h-52 sm:h-56 overflow-hidden bg-slate-100 flex items-center justify-center p-3">
                           <div
                             className="absolute inset-0 bg-cover bg-center filter blur-xl opacity-20 scale-125 pointer-events-none"
-                            style={{ backgroundImage: `url("${card.image || '/service/Minimal Brand Identity Design With Maximum Impact.jpeg'}")` }}
+                            style={{ backgroundImage: `url("${resolveMediaUrl(card.image, FALLBACK_SERVICE_IMAGE)}")` }}
                           />
                           <div className="relative w-full h-full z-10 flex items-center justify-center">
                             <img
-                              src={card.image || "/service/Minimal Brand Identity Design With Maximum Impact.jpeg"}
+                              src={resolveMediaUrl(card.image, FALLBACK_SERVICE_IMAGE)}
                               alt={card.title}
                               className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-sm"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = FALLBACK_SERVICE_IMAGE;
+                              }}
                             />
                           </div>
                           {card.badge && (
@@ -5540,9 +5931,12 @@ export default function AdminDashboardPage() {
                         <div>
                           <div className="relative h-28 w-full rounded-lg overflow-hidden bg-slate-200 mb-3">
                             <img
-                              src={step.image || "/service/Minimal Brand Identity Design With Maximum Impact.jpeg"}
+                              src={resolveMediaUrl(step.image, FALLBACK_SERVICE_IMAGE)}
                               alt={step.title}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = FALLBACK_SERVICE_IMAGE;
+                              }}
                             />
                             <span className="absolute top-2 left-2 bg-slate-900/80 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded">
                               {step.badge || "STEP"}
@@ -5752,18 +6146,38 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Quick Image Presets */}
+                    {/* Quick Image Presets & Upload */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Artwork Image URL
-                      </label>
-                      <input
-                        type="text"
-                        value={artForm.image}
-                        onChange={(e) => setArtForm({ ...artForm, image: e.target.value })}
-                        placeholder="/image/gallery/imigongo-fusion.jpg"
-                        className="w-full text-xs p-2.5 rounded bg-gray-50 border border-gray-200 focus:outline-none focus:border-[#128C38] mb-1.5"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-gray-700">
+                          Artwork Image *
+                        </label>
+                        {isUploadingArtImage && (
+                          <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Uploading to Cloudinary...
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
+                        <label className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 bg-emerald-50 hover:bg-emerald-100/70 text-emerald-800 text-xs font-semibold cursor-pointer transition-colors shrink-0">
+                          <Upload className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Upload Artwork Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleUploadArtImage}
+                            disabled={isUploadingArtImage}
+                            className="hidden"
+                          />
+                        </label>
+                        <input
+                          type="text"
+                          value={artForm.image}
+                          onChange={(e) => setArtForm({ ...artForm, image: e.target.value })}
+                          placeholder="Or paste Cloudinary / custom image URL"
+                          className="w-full text-xs p-2 rounded bg-gray-50 border border-gray-200 focus:outline-none focus:border-[#128C38]"
+                        />
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
                         <span className="text-[10px] text-gray-400 font-semibold self-center mr-1">Presets:</span>
                         {ARTWORK_IMAGE_PRESETS.map((p) => (
@@ -5772,7 +6186,7 @@ export default function AdminDashboardPage() {
                             type="button"
                             onClick={() => setArtForm({ ...artForm, image: p.url })}
                             className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
-                              artForm.image === p.url
+                              resolveMediaUrl(artForm.image) === p.url
                                 ? "bg-[#128C38] text-white border-[#128C38]"
                                 : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
                             }`}
@@ -5842,9 +6256,12 @@ export default function AdminDashboardPage() {
                   <div className="bg-white border border-gray-200 shadow-sm rounded overflow-hidden">
                     <div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
                       <img
-                        src={artForm.image || "/image/gallery/imigongo-fusion.jpg"}
+                        src={resolveMediaUrl(artForm.image, FALLBACK_ARTWORK_IMAGE)}
                         alt={artForm.title || "Artwork Preview"}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_ARTWORK_IMAGE;
+                        }}
                       />
                       <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-2xs text-white text-[10px] font-mono px-2 py-0.5 rounded">
                         {artForm.dimensions || "100 × 80 cm"}
@@ -6452,11 +6869,18 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                {/* Preset Image Selector */}
+                {/* Preset Image Selector & Upload */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Select Preset Project Image
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-gray-700">
+                      Project Showcase Image *
+                    </label>
+                    {isUploadingPortfolioImage && (
+                      <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Uploading to Cloudinary...
+                      </span>
+                    )}
+                  </div>
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     {PORTFOLIO_IMAGE_PRESETS.map((preset) => (
                       <button
@@ -6464,7 +6888,7 @@ export default function AdminDashboardPage() {
                         type="button"
                         onClick={() => setPortfolioForm((prev) => ({ ...prev, image: preset.url }))}
                         className={`text-[10px] p-2 rounded border text-left flex flex-col gap-1 transition-colors ${
-                          portfolioForm.image === preset.url
+                          resolveMediaUrl(portfolioForm.image) === preset.url
                             ? "border-[#128C38] bg-emerald-50 text-[#128C38] font-bold"
                             : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                         }`}
@@ -6473,14 +6897,27 @@ export default function AdminDashboardPage() {
                       </button>
                     ))}
                   </div>
-                  <input
-                    type="text"
-                    value={portfolioForm.image}
-                    onChange={(e) => setPortfolioForm((prev) => ({ ...prev, image: e.target.value }))}
-                    placeholder="Or enter custom image URL: /image/..."
-                    className="w-full text-xs border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 focus:outline-hidden focus:border-[#128C38]"
-                    required
-                  />
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <label className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 bg-emerald-50 hover:bg-emerald-100/70 text-emerald-800 text-xs font-semibold cursor-pointer transition-colors shrink-0">
+                      <Upload className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Upload Project Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadPortfolioImage}
+                        disabled={isUploadingPortfolioImage}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={portfolioForm.image}
+                      onChange={(e) => setPortfolioForm((prev) => ({ ...prev, image: e.target.value }))}
+                      placeholder="Or enter Cloudinary / custom image URL"
+                      className="w-full text-xs border border-gray-300 rounded px-3 py-2 bg-white text-gray-900 focus:outline-hidden focus:border-[#128C38]"
+                      required
+                    />
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -6542,9 +6979,13 @@ export default function AdminDashboardPage() {
                 <div className="bg-white border border-gray-200 shadow-sm rounded overflow-hidden">
                   <div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
                     <img
-                      src={portfolioForm.image || "/image/graphic design tool.jpg"}
+                      src={resolveMediaUrl(portfolioForm.image, PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE)}
                       alt={portfolioForm.title || "Project Preview"}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          PORTFOLIO_IMAGE_PRESETS[0]?.url || FALLBACK_SERVICE_IMAGE;
+                      }}
                     />
                     <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-2xs text-white text-[10px] font-bold px-2 py-0.5 rounded">
                       {portfolioForm.category || "Branding"}
@@ -6688,25 +7129,55 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Service Image Preset</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">Service Image *</label>
+                    {isUploadingCardImage && (
+                      <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Uploading to Cloudinary...
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Preset Dropdown */}
                   <select
-                    value={cardForm.image || ""}
-                    onChange={(e) => setCardForm((prev) => ({ ...prev, image: e.target.value }))}
+                    value={resolveMediaUrl(cardForm.image, "")}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setCardForm((prev) => ({ ...prev, image: e.target.value }));
+                      }
+                    }}
                     className="w-full text-xs border border-slate-300 rounded px-3 py-2 bg-white text-slate-900 focus:outline-hidden focus:border-[#128C38] mb-2"
                   >
+                    <option value="">-- Select from Preset Images --</option>
                     {AVAILABLE_SERVICE_IMAGES.map((img) => (
                       <option key={img.path} value={img.path}>
-                        {img.label} ({img.path.split("/").pop()})
+                        {img.label}
                       </option>
                     ))}
                   </select>
-                  <input
-                    type="text"
-                    value={cardForm.image || ""}
-                    onChange={(e) => setCardForm((prev) => ({ ...prev, image: e.target.value }))}
-                    placeholder="Or enter custom image path (e.g. /service/...)"
-                    className="w-full text-xs border border-slate-300 rounded px-3 py-1.5 bg-white text-slate-900 font-mono text-[11px]"
-                  />
+
+                  {/* Upload button & direct URL input row */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <label className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 bg-emerald-50 hover:bg-emerald-100/70 text-emerald-800 text-xs font-semibold cursor-pointer transition-colors shrink-0">
+                      <Upload className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Upload from Device</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadCardImage}
+                        disabled={isUploadingCardImage}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <input
+                      type="text"
+                      value={cardForm.image || ""}
+                      onChange={(e) => setCardForm((prev) => ({ ...prev, image: e.target.value }))}
+                      placeholder="Or paste Cloudinary / custom image URL"
+                      className="w-full text-xs border border-slate-300 rounded px-3 py-1.5 bg-white text-slate-900 font-mono text-[11px] focus:outline-hidden focus:border-[#128C38]"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -6753,9 +7224,13 @@ export default function AdminDashboardPage() {
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                   <div className="relative w-full h-44 overflow-hidden bg-slate-100">
                     <img
-                      src={cardForm.image || AVAILABLE_SERVICE_IMAGES[0]?.path}
+                      src={resolveMediaUrl(cardForm.image, AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE)}
                       alt={cardForm.title || "Preview"}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE;
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     {cardForm.badge && (

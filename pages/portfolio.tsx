@@ -1,21 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import { portfolioItems } from "@/lib/data";
+import { resolveMediaUrl, FALLBACK_SERVICE_IMAGE } from "@/lib/mediaUtils";
 import { Sparkles, ArrowRight } from "lucide-react";
 
 const categories = ["All", "Branding", "Photography", "Videography", "Printing", "Marketing"];
 
 export default function PortfolioPage() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [items, setItems] = useState<any[]>(portfolioItems);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("jreal_portfolio_items");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Keep published items
+          const published = parsed.filter((p: any) => p.status !== "Draft");
+          if (published.length > 0) {
+            setItems(published);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load custom portfolio items:", e);
+    }
+  }, []);
 
   const filteredItems =
     activeCategory === "All"
-      ? portfolioItems
-      : portfolioItems.filter((item) => item.category === activeCategory);
+      ? items
+      : items.filter((item) => item.category === activeCategory);
 
   return (
     <>
@@ -69,7 +89,7 @@ export default function PortfolioPage() {
               >
                 <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                   <Image
-                    src={item.image}
+                    src={resolveMediaUrl(item.image, FALLBACK_SERVICE_IMAGE)}
                     alt={item.title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"

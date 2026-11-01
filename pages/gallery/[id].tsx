@@ -12,6 +12,7 @@ import {
   calculateFinancialBreakdown,
   type Artwork,
 } from "@/lib/galleryData";
+import { resolveMediaUrl, FALLBACK_ARTWORK_IMAGE } from "@/lib/mediaUtils";
 
 export default function ArtworkDetailPage() {
   const router = useRouter();
@@ -132,13 +133,14 @@ export default function ArtworkDetailPage() {
             <div className="lg:col-span-7 space-y-4">
               <div className="relative aspect-[4/3] sm:aspect-[16/11] bg-[#f0f0ed] border border-gray-200 rounded-md overflow-hidden">
                 <Image
-                  src={
+                  src={resolveMediaUrl(
                     activeTab === "front"
-                      ? artwork.images?.front || "/image/gallery/imigongo-fusion.jpg"
+                      ? artwork.images?.front
                       : activeTab === "detail"
-                      ? artwork.images?.detail || artwork.images?.front || "/image/gallery/imigongo-fusion.jpg"
-                      : artwork.images?.inRoom || artwork.images?.front || "/image/gallery/imigongo-fusion.jpg"
-                  }
+                      ? artwork.images?.detail || artwork.images?.front
+                      : artwork.images?.inRoom || artwork.images?.front,
+                    FALLBACK_ARTWORK_IMAGE
+                  )}
                   alt={artwork.title}
                   fill
                   priority
@@ -432,7 +434,7 @@ export default function ArtworkDetailPage() {
                   >
                     <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                       <Image
-                        src={item.images?.front || "/image/gallery/imigongo-fusion.jpg"}
+                        src={resolveMediaUrl(item.images?.front, FALLBACK_ARTWORK_IMAGE)}
                         alt={item.title}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-500"

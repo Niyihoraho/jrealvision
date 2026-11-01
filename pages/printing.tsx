@@ -17,6 +17,7 @@ import {
   INITIAL_SERVICE_CARDS,
   ServiceCardItem,
 } from "@/lib/servicesData";
+import { resolveMediaUrl, FALLBACK_SERVICE_IMAGE } from "@/lib/mediaUtils";
 
 export default function PrintingPage() {
   const [capabilitiesList, setCapabilitiesList] = useState<ServiceCardItem[]>(() =>
@@ -82,11 +83,11 @@ export default function PrintingPage() {
                 <div className="relative w-full h-56 sm:h-64 overflow-hidden bg-slate-100 flex items-center justify-center p-3">
                   <div
                     className="absolute inset-0 bg-cover bg-center filter blur-xl opacity-20 scale-125 pointer-events-none"
-                    style={{ backgroundImage: `url("${cap.image || '/service/Flyers, Posters & Banners.jpeg'}")` }}
+                    style={{ backgroundImage: `url("${resolveMediaUrl(cap.image, FALLBACK_SERVICE_IMAGE)}")` }}
                   />
                   <div className="relative w-full h-full z-10 flex items-center justify-center">
                     <Image
-                      src={cap.image || "/service/Flyers, Posters & Banners.jpeg"}
+                      src={resolveMediaUrl(cap.image, FALLBACK_SERVICE_IMAGE)}
                       alt={cap.title}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

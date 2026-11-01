@@ -1,6 +1,8 @@
 // JREAL VISION DESIGN — Multi-Vendor Art Marketplace Data & Types
 // Based on Multi-Vendor Art Marketplace Prototype Workflow (gallery.pdf)
 
+import { resolveMediaUrl, FALLBACK_ARTWORK_IMAGE } from "./mediaUtils";
+
 export interface Artwork {
   id: string;
   title: string;
@@ -279,9 +281,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Solid Wood)",
     price: 320000,
     images: {
-      front: "/image/gallery/thousand-hills.jpg",
-      detail: "/image/gallery/thousand-hills.jpg",
-      inRoom: "/image/gallery/thousand-hills.jpg",
+      front: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Published",
     year: "2025",
@@ -310,9 +312,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Floating Frame)",
     price: 280000,
     images: {
-      front: "/image/gallery/african-woman-portrait.jpg",
-      detail: "/image/gallery/african-woman-portrait.jpg",
-      inRoom: "/image/gallery/african-woman-portrait.jpg",
+      front: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Published",
     year: "2025",
@@ -341,9 +343,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Floating Frame)",
     price: 210000,
     images: {
-      front: "/image/gallery/imigongo-fusion.jpg",
-      detail: "/image/gallery/imigongo-fusion.jpg",
-      inRoom: "/image/gallery/imigongo-fusion.jpg",
+      front: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Published",
     year: "2025",
@@ -372,9 +374,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Solid Wood)",
     price: 240000,
     images: {
-      front: "/image/gallery/kigali-rhythm.jpg",
-      detail: "/image/gallery/kigali-rhythm.jpg",
-      inRoom: "/image/gallery/kigali-rhythm.jpg",
+      front: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Published",
     year: "2024",
@@ -403,9 +405,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Solid Wood)",
     price: 360000,
     images: {
-      front: "/image/gallery/mountain-gorilla.jpg",
-      detail: "/image/gallery/mountain-gorilla.jpg",
-      inRoom: "/image/gallery/mountain-gorilla.jpg",
+      front: resolveMediaUrl("/image/gallery/mountain-gorilla.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/mountain-gorilla.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/mountain-gorilla.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Published",
     year: "2025",
@@ -434,9 +436,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Stretched Canvas",
     price: 180000,
     images: {
-      front: "/image/gallery/thousand-hills.jpg",
-      detail: "/image/gallery/thousand-hills.jpg",
-      inRoom: "/image/gallery/thousand-hills.jpg",
+      front: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Pending Review", // Demonstrates artwork moderation queue
     year: "2025",
@@ -465,9 +467,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Floating Frame)",
     price: 150000,
     images: {
-      front: "/image/gallery/kigali-rhythm.jpg",
-      detail: "/image/gallery/kigali-rhythm.jpg",
-      inRoom: "/image/gallery/kigali-rhythm.jpg",
+      front: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Draft", // Demonstrates artist draft status
     year: "2025",
@@ -494,9 +496,9 @@ export const initialArtworks: Artwork[] = [
     framing: "Framed (Solid Wood)",
     price: 290000,
     images: {
-      front: "/image/gallery/african-woman-portrait.jpg",
-      detail: "/image/gallery/african-woman-portrait.jpg",
-      inRoom: "/image/gallery/african-woman-portrait.jpg",
+      front: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
+      detail: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
+      inRoom: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
     },
     status: "Sold", // Demonstrates sold status
     year: "2024",
@@ -515,7 +517,7 @@ export const initialEscrowOrders: EscrowOrder[] = [
     id: "ESC-88410",
     artworkId: "art-108",
     artworkTitle: "Intore Warrior Dance Motion",
-    artworkImage: "/image/gallery/african-woman-portrait.jpg",
+    artworkImage: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
     artistId: "artist-3",
     artistName: "Uwase Diane",
     buyerName: "Didier Hakizimana",
@@ -541,7 +543,7 @@ export const initialEscrowOrders: EscrowOrder[] = [
     id: "ESC-88411",
     artworkId: "art-102",
     artworkTitle: "Umulisa (The Graceful Mother)",
-    artworkImage: "/image/gallery/african-woman-portrait.jpg",
+    artworkImage: resolveMediaUrl("/image/gallery/african-woman-portrait.jpg", FALLBACK_ARTWORK_IMAGE),
     artistId: "artist-3",
     artistName: "Uwase Diane",
     buyerName: "Sarah Jenkins",

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { productCategories, products } from "@/lib/data";
+import { resolveMediaUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/mediaUtils";
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Layers } from "lucide-react";
 
 const categoryMeta: Record<string, { desc: string; startingPrice: string }> = {
@@ -223,7 +224,7 @@ export default function ProductGrid() {
                   className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100 block"
                 >
                   <Image
-                    src={cat.image || "/image/shopping_merch.jpg"}
+                    src={resolveMediaUrl(cat.image, FALLBACK_PRODUCT_IMAGE)}
                     alt={cat.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-500"

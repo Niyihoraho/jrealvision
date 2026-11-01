@@ -24,6 +24,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { productCategories, products as defaultProducts, type ProductCategory } from "@/lib/data";
+import { resolveMediaUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/mediaUtils";
 
 export interface AdminCategoryItem {
   id: string;
@@ -605,11 +606,11 @@ export default function AdminCategoriesManagement() {
                 >
                   <div className="relative aspect-[16/10] w-full bg-gray-200 overflow-hidden">
                     <img
-                      src={cat.image || "/image/shopping_merch.jpg"}
+                      src={resolveMediaUrl(cat.image, FALLBACK_PRODUCT_IMAGE)}
                       alt={cat.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = "/image/shopping_merch.jpg";
+                        e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
                       }}
                     />
                     <div className="absolute top-2 left-2">
@@ -730,11 +731,11 @@ export default function AdminCategoriesManagement() {
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-10 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
                           <img
-                            src={cat.image || "/image/shopping_merch.jpg"}
+                            src={resolveMediaUrl(cat.image, FALLBACK_PRODUCT_IMAGE)}
                             alt={cat.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = "/image/shopping_merch.jpg";
+                              e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
                             }}
                           />
                         </div>
@@ -968,11 +969,11 @@ export default function AdminCategoriesManagement() {
                   <div className="p-2.5 bg-white rounded-xl border border-gray-200 flex items-center gap-3 shadow-2xs">
                     <div className="relative w-14 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 border border-gray-200 flex items-center justify-center">
                       <img
-                        src={formData.image}
+                        src={resolveMediaUrl(formData.image, FALLBACK_PRODUCT_IMAGE)}
                         alt="Category Preview"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = "/image/shopping_merch.jpg";
+                          e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
                         }}
                       />
                     </div>

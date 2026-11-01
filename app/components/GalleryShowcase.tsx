@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { initialArtworks } from "@/lib/galleryData";
+import { resolveMediaUrl, FALLBACK_ARTWORK_IMAGE } from "@/lib/mediaUtils";
 
 export default function GalleryShowcase() {
   const featuredArtworks = initialArtworks
@@ -31,7 +32,7 @@ export default function GalleryShowcase() {
             >
               <Link href={`/gallery/${art.id}`} className="block relative aspect-[4/3] bg-gray-100 overflow-hidden">
                 <Image
-                  src={art.images.front}
+                  src={resolveMediaUrl(art.images.front, FALLBACK_ARTWORK_IMAGE)}
                   alt={art.title}
                   fill
                   className="object-cover transition-transform duration-500 hover:scale-[1.02]"

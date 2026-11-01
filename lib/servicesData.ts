@@ -2,6 +2,8 @@
 // Provides persistent client-side data management for Admin Dashboard CRUD
 // and public service pages (Design, Branding, Photography, Videography, Printing, Digital Marketing)
 
+import { resolveMediaUrl, FALLBACK_SERVICE_IMAGE } from "./mediaUtils";
+
 export interface ServiceCardItem {
   id: string;
   category: "design" | "branding" | "marketing" | "photography" | "videography" | "printing";
@@ -54,7 +56,7 @@ export const AVAILABLE_SERVICE_IMAGES = [
   { label: "Textile & Shopping Merch", path: "https://res.cloudinary.com/qfhbfsci/image/upload/v1791043479/jreal/products/shopping_merch_1791043480384.jpg" },
 ];
 
-export const INITIAL_SERVICE_CARDS: ServiceCardItem[] = [
+const RAW_INITIAL_SERVICE_CARDS: ServiceCardItem[] = [
   // ── Graphic Design ──
   {
     id: "des-1",
@@ -368,6 +370,11 @@ export const INITIAL_SERVICE_CARDS: ServiceCardItem[] = [
   },
 ];
 
+export const INITIAL_SERVICE_CARDS: ServiceCardItem[] = RAW_INITIAL_SERVICE_CARDS.map((card) => ({
+  ...card,
+  image: resolveMediaUrl(card.image, AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE),
+}));
+
 export const INITIAL_BRAND_BUNDLES: BrandBundleItem[] = [
   {
     id: "bundle-1",
@@ -464,20 +471,35 @@ export const INITIAL_MARKETING_PACKAGES: MarketingPackageItem[] = [
 
 // Helper to get cards from localStorage or defaults
 export function getStoredServiceCards(): ServiceCardItem[] {
-  if (typeof window === "undefined") return INITIAL_SERVICE_CARDS;
+  const normalizeList = (items: ServiceCardItem[]): ServiceCardItem[] =>
+    items.map((c) => ({
+      ...c,
+      image: resolveMediaUrl(c.image, AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE),
+    }));
+
+  if (typeof window === "undefined") return normalizeList(INITIAL_SERVICE_CARDS);
   try {
     const raw = localStorage.getItem("jreal_service_cards");
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return normalizeList(parsed);
+      }
+    }
   } catch (e) {
     console.error("Error reading jreal_service_cards:", e);
   }
-  return INITIAL_SERVICE_CARDS;
+  return normalizeList(INITIAL_SERVICE_CARDS);
 }
 
 export function saveStoredServiceCards(cards: ServiceCardItem[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem("jreal_service_cards", JSON.stringify(cards));
+    const normalized = cards.map((c) => ({
+      ...c,
+      image: resolveMediaUrl(c.image, AVAILABLE_SERVICE_IMAGES[0]?.path || FALLBACK_SERVICE_IMAGE),
+    }));
+    localStorage.setItem("jreal_service_cards", JSON.stringify(normalized));
     window.dispatchEvent(new Event("jreal_services_updated"));
   } catch (e) {
     console.error("Error saving jreal_service_cards:", e);

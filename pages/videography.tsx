@@ -15,6 +15,7 @@ import {
   INITIAL_SERVICE_CARDS,
   getStoredServiceCards,
 } from "@/lib/servicesData";
+import { resolveMediaUrl, FALLBACK_SERVICE_IMAGE } from "@/lib/mediaUtils";
 
 export default function VideographyPage() {
   const [videoList, setVideoList] = useState<ServiceCardItem[]>(() =>
@@ -139,11 +140,11 @@ export default function VideographyPage() {
                   <div className="relative w-full h-56 sm:h-64 overflow-hidden bg-slate-100 flex items-center justify-center p-3">
                     <div
                       className="absolute inset-0 bg-cover bg-center filter blur-xl opacity-20 scale-125 pointer-events-none"
-                      style={{ backgroundImage: `url("${type.image || '/service/Social Media Reels & TikToks.jpeg'}")` }}
+                      style={{ backgroundImage: `url("${resolveMediaUrl(type.image, FALLBACK_SERVICE_IMAGE)}")` }}
                     />
                     <div className="relative w-full h-full z-10 flex items-center justify-center">
                       <Image
-                        src={type.image || "/service/Social Media Reels & TikToks.jpeg"}
+                        src={resolveMediaUrl(type.image, FALLBACK_SERVICE_IMAGE)}
                         alt={type.title}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -240,7 +241,7 @@ export default function VideographyPage() {
                     <div className="flex items-center gap-3.5">
                       <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white border border-emerald-200/80 overflow-hidden shrink-0 shadow-2xs p-1">
                         <Image
-                          src={activeVideoItem.image || "/service/Social Media Reels & TikToks.jpeg"}
+                          src={resolveMediaUrl(activeVideoItem.image, FALLBACK_SERVICE_IMAGE)}
                           alt={activeVideoItem.title}
                           fill
                           className="object-contain"

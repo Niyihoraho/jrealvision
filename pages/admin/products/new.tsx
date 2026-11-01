@@ -6,6 +6,7 @@ import Header from "@/app/components/Header";
 import RoleGuard from "@/app/components/RoleGuard";
 import ProductAttributeManager from "@/app/components/admin/ProductAttributeManager";
 import ProductImageManager from "@/app/components/admin/ProductImageManager";
+import { resolveMediaUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/mediaUtils";
 import {
   ProductAttribute,
   createDefaultApparelAttributes,
@@ -399,9 +400,12 @@ export default function NewProductPage() {
                   <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
                     <div className="aspect-4/3 bg-slate-100 relative overflow-hidden">
                       <img
-                        src={coverImage || images[0] || "/image/printing_products.jpg"}
+                        src={resolveMediaUrl(coverImage || images[0], FALLBACK_PRODUCT_IMAGE)}
                         alt={title || "Product Preview"}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_PRODUCT_IMAGE;
+                        }}
                       />
                       <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-2xs text-slate-800 text-[10px] font-semibold px-2 py-0.5 rounded border border-slate-200">
                         {category}

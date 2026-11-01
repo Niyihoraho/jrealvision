@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { resolveMediaUrl } from "@/lib/mediaUtils";
 
 export default function Hero() {
   return (
@@ -9,7 +10,7 @@ export default function Hero() {
       id="home"
       className="relative pt-[115px] sm:pt-[125px] pb-7 sm:pb-9 bg-[#0a0a0a] overflow-hidden"
       style={{
-        backgroundImage: `url('/image/graphic design tool.jpg')`,
+        backgroundImage: `url('${resolveMediaUrl('/image/graphic design tool.jpg')}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

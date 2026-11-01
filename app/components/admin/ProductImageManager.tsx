@@ -13,6 +13,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
+import { resolveMediaUrl, FALLBACK_PRODUCT_IMAGE } from "@/lib/mediaUtils";
 
 interface ProductImageManagerProps {
   images: string[];
@@ -393,7 +394,7 @@ export default function ProductImageManager({
               {uploadedPresets.map((preset) => {
                 const isAdded = safeImages.includes(preset.url);
                 const isCover = currentCover === preset.url;
-                const displaySrc = previewMap[preset.url] || preset.preview || preset.url;
+                const displaySrc = previewMap[preset.url] || preset.preview || resolveMediaUrl(preset.url, FALLBACK_PRODUCT_IMAGE);
 
                 return (
                   <div
@@ -490,7 +491,7 @@ export default function ProductImageManager({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-1">
         {safeImages.map((imgUrl, idx) => {
           const isCover = currentCover === imgUrl || (idx === 0 && !safeImages.includes(currentCover));
-          const displaySrc = previewMap[imgUrl] || imgUrl;
+          const displaySrc = previewMap[imgUrl] || resolveMediaUrl(imgUrl, FALLBACK_PRODUCT_IMAGE);
 
           return (
             <div

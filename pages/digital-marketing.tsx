@@ -19,6 +19,7 @@ import {
   INITIAL_MARKETING_PACKAGES,
   MarketingPackageItem,
 } from "@/lib/servicesData";
+import { resolveMediaUrl, FALLBACK_SERVICE_IMAGE } from "@/lib/mediaUtils";
 
 export default function DigitalMarketingPage() {
   const [marketingCards, setMarketingCards] = useState<ServiceCardItem[]>(() =>
@@ -92,11 +93,11 @@ export default function DigitalMarketingPage() {
                 <div className="relative w-full h-52 sm:h-56 overflow-hidden bg-slate-100 flex items-center justify-center p-3">
                   <div
                     className="absolute inset-0 bg-cover bg-center filter blur-xl opacity-20 scale-125 pointer-events-none"
-                    style={{ backgroundImage: `url("${card.image || '/service/Social Media Graphics & Reels Cover.jpeg'}")` }}
+                    style={{ backgroundImage: `url("${resolveMediaUrl(card.image, FALLBACK_SERVICE_IMAGE)}")` }}
                   />
                   <div className="relative w-full h-full z-10 flex items-center justify-center">
                     <Image
-                      src={card.image || "/service/Social Media Graphics & Reels Cover.jpeg"}
+                      src={resolveMediaUrl(card.image, FALLBACK_SERVICE_IMAGE)}
                       alt={card.title}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
