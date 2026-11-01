@@ -1161,7 +1161,7 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false));
 
     // ── Fetch products from Supabase DB ──
-    fetch("/api/products")
+    fetch("/api/products?all=true&nocache=true")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.products && Array.isArray(data.products) && data.products.length > 0) {

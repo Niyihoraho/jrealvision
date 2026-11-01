@@ -119,6 +119,11 @@ model Product {
 
   orderItems OrderItem[]
 
+  @@index([category])
+  @@index([active])
+  @@index([featured])
+  @@index([createdAt])
+  @@index([category, active])
   @@map("products")
 }
 
@@ -140,6 +145,8 @@ model Service {
   projectServices ProjectService[]
   bookings        Booking[]
 
+  @@index([category])
+  @@index([active])
   @@map("services")
 }
 
@@ -165,6 +172,9 @@ model Order {
   payments  Payment[]
   reviews   Review[]
 
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
   @@map("orders")
 }
 
@@ -199,6 +209,8 @@ model OrderItem {
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
+  @@index([orderId])
+  @@index([productId])
   @@map("order_items")
 }
 
@@ -576,6 +588,9 @@ model Artwork {
   artist       Artist        @relation(fields: [artistId], references: [id])
   escrowOrders EscrowOrder[]
 
+  @@index([artistId])
+  @@index([status])
+  @@index([createdAt])
   @@map("artworks")
 }
 

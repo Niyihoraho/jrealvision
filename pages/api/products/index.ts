@@ -42,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Single product query by ID
       if (id && typeof id === "string") {
+        res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
         const product = await prisma.product.findUnique({
           where: { id },
         });
@@ -99,6 +100,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
+      // Set Edge Caching headers (Next.js Edge Cache / CDN)
+      // Store listing is cached at the edge for 60s; served stale up to 300s while revalidating
+      if (!req.query.nocache) {
+        res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+      } else {
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      }
+
       // Build filter
       const where: any = { active: true };
       if (category && category !== "all" && typeof category === "string") {
@@ -115,13 +124,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ];
       }
 
-      const take = limit ? parseInt(limit as string, 10) : undefined;
+      // 20-Product Pagination logic
+      const isFetchAll = req.query.all === "true" || limit === "all";
+      const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+      const limitVal = isFetchAll
+        ? undefined
+        : Math.max(1, parseInt(limit as string, 10) || 20);
+      const skip = !isFetchAll && limitVal ? (page - 1) * limitVal : undefined;
 
-      const products = await prisma.product.findMany({
-        where,
-        take: !isNaN(take as number) ? take : undefined,
-        orderBy: { createdAt: "desc" },
-      });
+      const [totalCount, products] = await Promise.all([
+        prisma.product.count({ where }),
+        prisma.product.findMany({
+          where,
+          skip,
+          take: limitVal,
+          orderBy: { createdAt: "desc" },
+        }),
+      ]);
 
       const mapped = products.map((p: any) => {
         const { attributes, cleanDescription } = extractAttributesFromDescription(p.description);
@@ -132,16 +151,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
       });
 
-      return res.status(200).json({ success: true, count: mapped.length, products: mapped });
+      return res.status(200).json({
+        success: true,
+        count: mapped.length,
+        total: totalCount,
+        page: isFetchAll ? 1 : page,
+        totalPages: isFetchAll || !limitVal ? 1 : Math.ceil(totalCount / limitVal),
+        limit: limitVal || totalCount,
+        products: mapped,
+      });
     } catch (err: any) {
       console.error("[products GET]", err);
       // Fallback to in-memory default products if DB connection error
-      return res.status(200).json({ success: true, count: defaultProducts.length, products: defaultProducts });
+      const isFetchAll = req.query.all === "true" || req.query.limit === "all";
+      const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+      const limitVal = isFetchAll ? undefined : Math.max(1, parseInt(req.query.limit as string, 10) || 20);
+      const skip = !isFetchAll && limitVal ? (page - 1) * limitVal : 0;
+      const paginated = isFetchAll || !limitVal
+        ? defaultProducts
+        : defaultProducts.slice(skip, skip + limitVal);
+
+      return res.status(200).json({
+        success: true,
+        count: paginated.length,
+        total: defaultProducts.length,
+        page: isFetchAll ? 1 : page,
+        totalPages: isFetchAll || !limitVal ? 1 : Math.ceil(defaultProducts.length / (limitVal || 20)),
+        limit: limitVal || defaultProducts.length,
+        products: paginated,
+      });
     }
   }
 
   // ─── POST: Create product in Supabase DB ─────────────────────────────────────
   if (req.method === "POST") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     try {
       const {
         name,
@@ -202,6 +246,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── PUT / PATCH: Update product in Supabase DB ──────────────────────────────
   if (req.method === "PUT" || req.method === "PATCH") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     try {
       const {
         id,
@@ -271,6 +316,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── DELETE: Remove or soft-delete product ──────────────────────────────────
   if (req.method === "DELETE") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     try {
       const targetId = (req.query.id as string) || req.body?.id;
       if (!targetId) {

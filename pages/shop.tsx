@@ -52,6 +52,13 @@ export default function ShopPage() {
   const [onlyCustomizable, setOnlyCustomizable] = useState(false);
   const [onlyBudget, setOnlyBudget] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 20;
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategories, priceRange, onlyCustomizable, onlyBudget, searchQuery, sortBy]);
 
   // Sync query params from URL
   useEffect(() => {
@@ -180,6 +187,12 @@ export default function ShopPage() {
         return 0;
       });
   }, [catalogProducts, selectedCategories, priceRange, onlyCustomizable, onlyBudget, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
 
   return (
     <>
@@ -405,9 +418,14 @@ export default function ShopPage() {
               {/* Status Counter */}
               <div className="flex items-center justify-between mb-4 px-1">
                 <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                  Showing <span className="font-bold text-gray-900">{filteredProducts.length}</span> of{" "}
-                  <span className="font-semibold text-gray-700">{products.length}</span> products
+                  Showing <span className="font-bold text-gray-900">{filteredProducts.length === 0 ? 0 : (currentPage - 1) * PRODUCTS_PER_PAGE + 1}–{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredProducts.length)}</span> of{" "}
+                  <span className="font-semibold text-gray-700">{filteredProducts.length}</span> products
                 </p>
+                {totalPages > 1 && (
+                  <p className="text-xs text-gray-500 font-medium">
+                    Page <span className="font-bold text-gray-900">{currentPage}</span> of {totalPages}
+                  </p>
+                )}
               </div>
 
               {/* Products Catalog Grid */}
@@ -428,11 +446,55 @@ export default function ShopPage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-5">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4 sm:gap-5">
+                    {paginatedProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {/* 20-Product Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="mt-10 flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => {
+                          setCurrentPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 120, behavior: "smooth" });
+                        }}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-colors"
+                      >
+                        Previous
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                        <button
+                          key={num}
+                          onClick={() => {
+                            setCurrentPage(num);
+                            window.scrollTo({ top: 120, behavior: "smooth" });
+                          }}
+                          className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
+                            currentPage === num
+                              ? "bg-[#128C38] text-white shadow-sm"
+                              : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-2xs"
+                          }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          setCurrentPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 120, behavior: "smooth" });
+                        }}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 rounded-xl text-xs font-bold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </section>
           </div>
