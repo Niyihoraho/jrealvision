@@ -26,3 +26,4 @@ CREATE INDEX IF NOT EXISTS "order_items_product_id_idx" ON "order_items"("produc
 CREATE INDEX IF NOT EXISTS "artworks_artist_id_idx" ON "artworks"("artist_id");
 CREATE INDEX IF NOT EXISTS "artworks_status_idx" ON "artworks"("status");
 CREATE INDEX IF NOT EXISTS "artworks_created_at_idx" ON "artworks"("created_at");
+
