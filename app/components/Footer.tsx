@@ -185,11 +185,14 @@ export default function Footer() {
                   <a
                     key={platform}
                     href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#128C38] flex items-center justify-center transition-all hover:scale-110 border border-white/10 hover:border-[#F59E0B]/50"
                     aria-label={platform}
+                    title={platform}
                   >
                     <span className="text-xs font-bold uppercase text-white">
-                      {platform.slice(0, 2)}
+                      {platform === "tiktok" ? "TT" : platform === "instagram" ? "IG" : platform.slice(0, 2)}
                     </span>
                   </a>
                 )

@@ -117,13 +117,11 @@ export function calculateFinancialBreakdown(grossSalePrice: number) {
 
 export const galleryMediums = [
   "All Mediums",
-  "Oil on Canvas",
-  "Acrylic on Canvas",
-  "Imigongo Modern Fusion",
-  "Charcoal & Acrylic",
-  "Mixed Media",
-  "Sculptures",
-  "Digital Print",
+  "Surrealism",
+  "Psychological Art",
+  "Expressionism",
+  "Symbolism",
+  "Contemporary Art",
 ];
 
 export const galleryCities = ["All Cities", "Kigali", "Huye", "Musanze", "Rubavu"];
@@ -276,7 +274,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "An original masterwork capturing the iconic terraced green hills of Rwanda under a radiant golden sunset. Created with rich impasto knife work and museum-grade oil pigments on archival Belgian linen canvas. The piece conveys deep serenity and connection to the Rwandan countryside.",
-    medium: "Oil on Canvas",
+    medium: "Surrealism",
     dimensions: "120 x 85 cm",
     framing: "Framed (Solid Wood)",
     price: 320000,
@@ -307,7 +305,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "A luminous portrait blending traditional Rwandan headdress motifs with 24k gold leaf accents and warm umber tones. This painting celebrates the quiet dignity, maternal strength, and radiant spirit of contemporary African women.",
-    medium: "Oil on Canvas",
+    medium: "Symbolism",
     dimensions: "90 x 120 cm",
     framing: "Framed (Floating Frame)",
     price: 280000,
@@ -338,7 +336,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "A contemporary reinterpretation of Rwandan Imigongo geometric symbols. Built with textured mineral relief, organic pigments, deep obsidian black, chalk white, and warm terracotta. Evokes balance, unity, and generational wisdom.",
-    medium: "Imigongo Modern Fusion",
+    medium: "Contemporary Art",
     dimensions: "100 x 100 cm",
     framing: "Framed (Floating Frame)",
     price: 210000,
@@ -369,7 +367,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "Dynamic twilight view overlooking the Kigali Convention Center dome and winding commercial boulevards. Expressive motion trails of evening traffic and glowing storefronts capture the unstoppable momentum of Rwanda’s capital.",
-    medium: "Acrylic on Canvas",
+    medium: "Expressionism",
     dimensions: "110 x 80 cm",
     framing: "Framed (Solid Wood)",
     price: 240000,
@@ -400,7 +398,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "A commanding portrait of a mature silverback gorilla nestled in misty bamboo foliage of Volcanoes National Park. Heavy textural charcoal rendering captures the wisdom and gentle power of this majestic creature.",
-    medium: "Charcoal & Acrylic",
+    medium: "Psychological Art",
     dimensions: "130 x 95 cm",
     framing: "Framed (Solid Wood)",
     price: 360000,
@@ -431,7 +429,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "Traditional three-boat fishing flotilla gliding across tranquil Lake Kivu at dawn, silhouettes reflected on mist-covered waters with Congo mountains rising in the distance.",
-    medium: "Oil on Canvas",
+    medium: "Surrealism",
     dimensions: "75 x 50 cm",
     framing: "Stretched Canvas",
     price: 180000,
@@ -462,7 +460,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "Atmospheric study of prehistoric fern trees and sunlight beams cutting through Nyungwe ancient rainforest.",
-    medium: "Acrylic on Canvas",
+    medium: "Contemporary Art",
     dimensions: "60 x 80 cm",
     framing: "Framed (Floating Frame)",
     price: 150000,
@@ -491,7 +489,7 @@ export const initialArtworks: Artwork[] = [
     artistVerified: true,
     description:
       "Expressive dynamic representation of traditional Rwandan Intore dancer with flowing headdress and spear, frozen in airborne triumph.",
-    medium: "Oil on Canvas",
+    medium: "Expressionism",
     dimensions: "90 x 90 cm",
     framing: "Framed (Solid Wood)",
     price: 290000,

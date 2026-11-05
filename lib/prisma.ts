@@ -2,6 +2,9 @@
 // Gracefully initializes Prisma Client when database is connected,
 // with safe fallback when running locally without active DB credentials.
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+try { require("dotenv").config(); } catch {}
+
 let prismaClient: any = null;
 
 try {
@@ -39,7 +42,8 @@ try {
       globalForPrisma.prisma = prismaClient;
     }
   }
-} catch (e) {
+} catch (e: any) {
+  console.error("CRITICAL LIB PRISMA INIT ERROR:", e?.message, e?.stack);
   // Safe proxy fallback when Prisma client is not yet generated
   // This prevents Next.js from throwing 500 Internal Server Error
   prismaClient = new Proxy(

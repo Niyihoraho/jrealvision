@@ -6,9 +6,7 @@ import { companyInfo } from "@/lib/data";
 
 export default function WhatsAppChat() {
   const [isOpen, setIsOpen] = useState(false);
-  // Format phone number for WhatsApp: remove spaces and + sign, keep country code
-  const phoneNumber = companyInfo.phone.replace(/[\s+]/g, "");
-  const whatsappUrl = `https://wa.me/${phoneNumber}`;
+  const whatsappUrl = (companyInfo as any).whatsappUrl || "https://wa.me/message/GEHTP32CB57EH1";
 
   return (
     <>
@@ -85,10 +83,10 @@ export default function WhatsAppChat() {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg"
+              className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md hover:shadow-lg text-sm"
             >
               <MessageCircle className="w-5 h-5" />
-              Open Chat
+              Message Jerome on WhatsApp
             </a>
           </div>
         </div>

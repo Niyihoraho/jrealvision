@@ -118,13 +118,11 @@ interface Subscription {
 // ─── Presets for Admin Direct Catalog ──────────────────────────────────────────
 
 const ART_MEDIUM_OPTIONS = [
-  "Acrylic on Canvas",
-  "Oil on Linen",
-  "Imigongo Relief & Pigments",
-  "Banana Fiber & Sisal Tapestry",
-  "Wood Carving & Charcoal",
-  "Mixed Media on Textured Canvas",
-  "Watercolor & Ink on Paper",
+  "Surrealism",
+  "Psychological Art",
+  "Expressionism",
+  "Symbolism",
+  "Contemporary Art",
 ];
 
 const ART_FRAMING_OPTIONS: ArtworkListing["framing"][] = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,6 +9,7 @@ import Header from "@/app/components/Header";
 import Footer from "@/app/components/Footer";
 import RoleGuard from "@/app/components/RoleGuard";
 import ConfirmModal from "@/app/components/ConfirmModal";
+import { resolveMediaUrl, FALLBACK_ARTWORK_IMAGE } from "@/lib/mediaUtils";
 import {
   initialArtworks,
   initialArtists,
@@ -43,6 +44,10 @@ import {
   DollarSign,
   AlertCircle,
   Sparkles,
+  Upload,
+  Camera,
+  Loader2,
+  ImageIcon,
 } from "lucide-react";
 
 // Presets for quick artwork upload
@@ -55,13 +60,11 @@ const ARTWORK_IMAGE_PRESETS = [
 ];
 
 const ART_MEDIUM_OPTIONS = [
-  "Oil on Canvas",
-  "Acrylic on Canvas",
-  "Imigongo Modern Fusion",
-  "Mixed Media on Textured Linen",
-  "Banana Fiber & Wood Relief",
-  "Charcoal & Ink on Archival Paper",
-  "Traditional Pigment on Wood",
+  "Surrealism",
+  "Psychological Art",
+  "Expressionism",
+  "Symbolism",
+  "Contemporary Art",
 ];
 
 const ART_FRAMING_OPTIONS: Artwork["framing"][] = [
@@ -104,6 +107,10 @@ export default function ArtGalleryDashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("/image/gallery/imigongo-fusion.jpg");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // In-app Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -180,12 +187,26 @@ export default function ArtGalleryDashboardPage() {
       })
       .finally(() => setLoading(false));
 
-    // Load artworks from Supabase API
+    // Load cached artworks from localStorage first for instant display
+    try {
+      const cached = localStorage.getItem("jreal_artist_artworks_v1");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setArtworks(parsed);
+        }
+      }
+    } catch {}
+
+    // Load fresh artworks from Supabase API
     fetch("/api/artworks")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
           setArtworks(data.artworks);
+          try {
+            localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(data.artworks));
+          } catch {}
         }
       })
       .catch((err) => console.warn("Failed to load gallery artworks:", err));
@@ -196,167 +217,240 @@ export default function ArtGalleryDashboardPage() {
     router.push("/art-gallery/login");
   };
 
+  // ─── Cloudinary Image Upload ────────────────────────────────────────────────
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Instant local preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setImagePreviewUrl(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    setIsUploadingImage(true);
+    setModalError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", "gallery");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Upload failed");
+      }
+      setForm((prev) => ({ ...prev, image: data.url }));
+      setImagePreviewUrl(data.url);
+    } catch (err: any) {
+      console.error("Image upload failed:", err);
+      setModalError(err.message || "Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   // ─── CRUD Actions: Add / Edit / Delete ────────────────────────────────────────
 
   const openAddModal = () => {
     setEditingId(null);
     setModalError(null);
+    const defaultImg = "/image/gallery/imigongo-fusion.jpg";
     setForm({
       title: "",
       artistName: user?.name || "Jean Luc Habimana",
       artistCity: "Kigali",
-      medium: "Acrylic on Canvas",
+      medium: "Contemporary Art",
       dimensions: "100 × 80 cm",
       framing: "Framed (Solid Wood)",
       price: 300000,
       year: "2026",
       weight: "3.8 kg",
       certificateOfAuthenticity: true,
-      image: "/image/gallery/imigongo-fusion.jpg",
+      image: defaultImg,
       description: "",
       status: "Published",
     });
+    setImagePreviewUrl(defaultImg);
     setIsModalOpen(true);
   };
 
   const openEditModal = (item: Artwork) => {
     setEditingId(item.id);
     setModalError(null);
+    const frontImg = item.images?.front || (item as any).image || "/image/gallery/imigongo-fusion.jpg";
     setForm({
-      title: item.title,
-      artistName: item.artistName,
-      artistCity: item.artistCity,
-      medium: item.medium,
-      dimensions: item.dimensions,
-      framing: item.framing,
-      price: item.price,
-      year: item.year,
+      title: item.title || "",
+      artistName: item.artistName || user?.name || "Jean Luc Habimana",
+      artistCity: item.artistCity || "Kigali",
+      medium: item.medium || "Contemporary Art",
+      dimensions: item.dimensions || "100 × 80 cm",
+      framing: item.framing || "Framed (Solid Wood)",
+      price: Number(item.price) || 300000,
+      year: item.year || "2026",
       weight: item.weight || "3.8 kg",
-      certificateOfAuthenticity: item.certificateOfAuthenticity,
-      image: item.images.front,
-      description: item.description,
-      status: item.status === "Pending Review" ? "Published" : item.status,
+      certificateOfAuthenticity: item.certificateOfAuthenticity !== false,
+      image: frontImg,
+      description: item.description || "",
+      status: item.status === "Pending Review" ? "Published" : (item.status || "Published"),
     });
+    setImagePreviewUrl(frontImg);
     setIsModalOpen(true);
   };
 
   const handleSaveArtwork = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.price) {
-      setModalError("Please provide artwork title and price.");
+    if (!form.title.trim()) {
+      setModalError("Please provide an artwork title.");
+      return;
+    }
+    if (!form.price || form.price <= 0) {
+      setModalError("Please enter a valid listing price.");
       return;
     }
 
+    setIsSaving(true);
+    setModalError(null);
     const priceNum = Number(form.price);
 
-    if (editingId) {
-      setArtworks((prev) =>
-        prev.map((a) =>
-          a.id === editingId
-            ? {
-                ...a,
-                title: form.title,
-                artistName: form.artistName,
-                artistCity: form.artistCity,
-                medium: form.medium,
-                dimensions: form.dimensions,
-                framing: form.framing,
-                price: priceNum,
-                year: form.year,
-                weight: form.weight,
-                certificateOfAuthenticity: form.certificateOfAuthenticity,
-                images: { front: form.image, detail: form.image, inRoom: form.image },
-                description: form.description,
-                status: form.status,
-              }
-            : a
-        )
-      );
+    try {
+      if (editingId) {
+        // 1. Optimistic local update + persistent localStorage
+        setArtworks((prev) => {
+          const updated = prev.map((a) =>
+            a.id === editingId
+              ? {
+                  ...a,
+                  title: form.title.trim(),
+                  artistName: form.artistName,
+                  artistCity: form.artistCity,
+                  medium: form.medium,
+                  dimensions: form.dimensions,
+                  framing: form.framing,
+                  price: priceNum,
+                  year: form.year,
+                  weight: form.weight,
+                  certificateOfAuthenticity: form.certificateOfAuthenticity,
+                  images: { front: form.image, detail: form.image, inRoom: form.image },
+                  description: form.description,
+                  status: form.status,
+                }
+              : a
+          );
+          try {
+            localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
 
-      // Persist update in Supabase
-      fetch("/api/artworks", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingId,
-          title: form.title,
+        // 2. Persist update in Supabase DB
+        const res = await fetch("/api/artworks", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingId,
+            title: form.title.trim(),
+            artistName: form.artistName,
+            artistCity: form.artistCity,
+            medium: form.medium,
+            dimensions: form.dimensions,
+            framing: form.framing,
+            price: priceNum,
+            year: form.year,
+            weight: form.weight,
+            certificateOfAuthenticity: form.certificateOfAuthenticity,
+            image: form.image,
+            description: form.description,
+            status: form.status,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.warn("Update artwork DB warning:", errData);
+        }
+      } else {
+        const tempId = `art-${Date.now()}`;
+        const newArt: Artwork = {
+          id: tempId,
+          title: form.title.trim(),
+          artistId: "artist-jreal",
           artistName: form.artistName,
           artistCity: form.artistCity,
+          artistAvatar: "/image/photography/wedding.jpg",
+          artistBio: "Contemporary artist represented on JREAL Fine Art Marketplace.",
+          artistPhone: "+250 788 123 456",
+          artistVerified: true,
+          description: form.description,
           medium: form.medium,
           dimensions: form.dimensions,
           framing: form.framing,
           price: priceNum,
-          year: form.year,
-          weight: form.weight,
-          certificateOfAuthenticity: form.certificateOfAuthenticity,
-          image: form.image,
-          description: form.description,
+          images: { front: form.image, detail: form.image, inRoom: form.image },
           status: form.status,
-        }),
-      }).catch((err) => console.warn("Update artwork DB warning:", err));
-    } else {
-      const tempId = `art-${Date.now()}`;
-      const newArt: Artwork = {
-        id: tempId,
-        title: form.title,
-        artistId: "artist-jreal",
-        artistName: form.artistName,
-        artistCity: form.artistCity,
-        artistAvatar: "/image/photography/wedding.jpg",
-        artistBio: "Contemporary artist represented on JREAL Fine Art Marketplace.",
-        artistPhone: "+250 788 123 456",
-        artistVerified: true,
-        description: form.description,
-        medium: form.medium,
-        dimensions: form.dimensions,
-        framing: form.framing,
-        price: priceNum,
-        images: { front: form.image, detail: form.image, inRoom: form.image },
-        status: form.status,
-        year: form.year,
-        certificateOfAuthenticity: form.certificateOfAuthenticity,
-        featured: false,
-        views: 1,
-        likes: 0,
-        weight: form.weight,
-        curatorNotes: "Verified original artwork backed by platform escrow.",
-      };
-
-      setArtworks((prev) => [newArt, ...prev]);
-
-      // Persist creation in Supabase
-      fetch("/api/artworks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title,
-          artistName: form.artistName,
-          artistCity: form.artistCity,
-          medium: form.medium,
-          dimensions: form.dimensions,
-          framing: form.framing,
-          price: priceNum,
           year: form.year,
-          weight: form.weight,
           certificateOfAuthenticity: form.certificateOfAuthenticity,
-          image: form.image,
-          description: form.description,
-          status: form.status,
-        }),
-      })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data?.artwork) {
-            setArtworks((prev) =>
-              prev.map((a) => (a.id === tempId ? { ...a, id: data.artwork.id } : a))
-            );
+          featured: false,
+          views: 1,
+          likes: 0,
+          weight: form.weight,
+          curatorNotes: "Verified original artwork backed by platform escrow.",
+        };
+
+        setArtworks((prev) => {
+          const updated = [newArt, ...prev];
+          try {
+            localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+
+        // Persist creation in Supabase
+        const res = await fetch("/api/artworks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: form.title.trim(),
+            artistName: form.artistName,
+            artistCity: form.artistCity,
+            medium: form.medium,
+            dimensions: form.dimensions,
+            framing: form.framing,
+            price: priceNum,
+            year: form.year,
+            weight: form.weight,
+            certificateOfAuthenticity: form.certificateOfAuthenticity,
+            image: form.image,
+            description: form.description,
+            status: form.status,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.artwork?.id) {
+            setArtworks((prev) => {
+              const updated = prev.map((a) => (a.id === tempId ? { ...a, id: data.artwork.id } : a));
+              try {
+                localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
           }
-        })
-        .catch((err) => console.warn("Create artwork DB warning:", err));
-    }
+        }
+      }
 
-    setIsModalOpen(false);
-    setEditingId(null);
+      setIsModalOpen(false);
+      setEditingId(null);
+    } catch (err: any) {
+      console.error("Save artwork error:", err);
+      setModalError(err.message || "Failed to save artwork to database.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteArtwork = (id: string, title?: string) => {
@@ -367,7 +461,13 @@ export default function ArtGalleryDashboardPage() {
       confirmLabel: "Delete Artwork",
       variant: "danger",
       onConfirm: () => {
-        setArtworks((prev) => prev.filter((a) => a.id !== id));
+        setArtworks((prev) => {
+          const updated = prev.filter((a) => a.id !== id);
+          try {
+            localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
         fetch(`/api/artworks?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch((err) =>
           console.warn("Delete artwork DB warning:", err)
         );
@@ -378,10 +478,14 @@ export default function ArtGalleryDashboardPage() {
 
   const handleToggleStatus = (id: string) => {
     const item = artworks.find((a) => a.id === id);
-    const newStatus = item?.status === "Published" ? "Draft" : "Published";
-    setArtworks((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
-    );
+    const newStatus: "Draft" | "Published" = item?.status === "Published" ? "Draft" : "Published";
+    setArtworks((prev) => {
+      const updated = prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a));
+      try {
+        localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     fetch("/api/artworks", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -1109,237 +1213,419 @@ export default function ArtGalleryDashboardPage() {
       </main>
 
       {/* ═════════════════════════════════════════════════════════════════════
-          UPLOAD / EDIT ARTWORK MODAL
+          UPLOAD / EDIT ARTWORK MODAL (Split Layout with Live Card Preview)
          ═════════════════════════════════════════════════════════════════════ */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-gray-200 max-w-2xl w-full p-6 sm:p-7 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-gray-200 max-w-5xl w-full p-5 sm:p-7 shadow-2xl my-6 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
-              <div className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-[#128C38]" />
-                <h3 className="text-lg font-bold text-gray-900">
-                  {editingId ? "Edit Original Artwork" : "Upload Original Artwork"}
-                </h3>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#128C38] flex items-center justify-center border border-emerald-100">
+                  <Palette className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                    {editingId ? "Edit Original Artwork" : "Upload Original Artwork"}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Curate your creation for the JREAL Fine Art Marketplace
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {modalError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex items-center gap-2">
+              <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>{modalError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveArtwork} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Artwork Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. The Thousand Hills at Dawn"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Artist Name</label>
-                  <input
-                    type="text"
-                    value={form.artistName}
-                    onChange={(e) => setForm({ ...form, artistName: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">City</label>
-                  <select
-                    value={form.artistCity}
-                    onChange={(e) => setForm({ ...form, artistCity: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] cursor-pointer"
-                  >
-                    {ART_CITY_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Medium</label>
-                  <select
-                    value={form.medium}
-                    onChange={(e) => setForm({ ...form, medium: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] cursor-pointer"
-                  >
-                    {ART_MEDIUM_OPTIONS.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Framing</label>
-                  <select
-                    value={form.framing}
-                    onChange={(e) => setForm({ ...form, framing: e.target.value as any })}
-                    className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] cursor-pointer"
-                  >
-                    {ART_FRAMING_OPTIONS.map((f) => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Dimensions</label>
-                  <input
-                    type="text"
-                    placeholder="120 × 90 cm"
-                    value={form.dimensions}
-                    onChange={(e) => setForm({ ...form, dimensions: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Year</label>
-                  <input
-                    type="text"
-                    value={form.year}
-                    onChange={(e) => setForm({ ...form, year: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Weight</label>
-                  <input
-                    type="text"
-                    placeholder="4.0 kg"
-                    value={form.weight}
-                    onChange={(e) => setForm({ ...form, weight: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                  />
-                </div>
-              </div>
-
-              {/* Image Preset Selector & URL */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Artwork Photo</label>
-                <div className="grid grid-cols-5 gap-2 mb-2">
-                  {ARTWORK_IMAGE_PRESETS.map((preset) => (
-                    <button
-                      key={preset.url}
-                      type="button"
-                      onClick={() => setForm({ ...form, image: preset.url })}
-                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
-                        form.image === preset.url ? "border-[#128C38] scale-105" : "border-gray-200 opacity-70"
-                      }`}
-                      title={preset.label}
-                    >
-                      <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  placeholder="Or paste custom image URL /path"
-                  value={form.image}
-                  onChange={(e) => setForm({ ...form, image: e.target.value })}
-                  className="w-full px-3.5 py-1.5 text-xs font-mono border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                />
-              </div>
-
-              {/* Price & Real-Time Escrow Net Preview */}
-              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Listing Price (RWF) *</label>
-                  <input
-                    type="number"
-                    required
-                    min={10000}
-                    step={5000}
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2 text-xs font-bold font-mono border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#128C38]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200 text-[11px]">
+            <form onSubmit={handleSaveArtwork} className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* ── Left Column: Artwork Form Inputs ── */}
+                <div className="lg:col-span-7 space-y-4">
                   <div>
-                    <span className="text-gray-400 block">Gross Price:</span>
-                    <span className="font-bold text-gray-800">{formGross.toLocaleString()} RWF</span>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Artwork Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. The Thousand Hills at Dawn"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })}
+                      className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] focus:ring-1 focus:ring-[#128C38]"
+                    />
                   </div>
-                  <div>
-                    <span className="text-gray-400 block">Comm + Tax (30%):</span>
-                    <span className="font-bold text-rose-600">- {(formCommission + formTax).toLocaleString()} RWF</span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Artist Name
+                      </label>
+                      <input
+                        type="text"
+                        value={form.artistName}
+                        onChange={(e) => setForm({ ...form, artistName: e.target.value })}
+                        className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        City / Provenance
+                      </label>
+                      <select
+                        value={form.artistCity}
+                        onChange={(e) => setForm({ ...form, artistCity: e.target.value })}
+                        className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] cursor-pointer bg-white"
+                      >
+                        {ART_CITY_OPTIONS.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Medium / Style *
+                      </label>
+                      <select
+                        value={form.medium}
+                        onChange={(e) => setForm({ ...form, medium: e.target.value })}
+                        className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] cursor-pointer bg-white"
+                      >
+                        {ART_MEDIUM_OPTIONS.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Framing
+                      </label>
+                      <select
+                        value={form.framing}
+                        onChange={(e) => setForm({ ...form, framing: e.target.value as any })}
+                        className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38] cursor-pointer bg-white"
+                      >
+                        {ART_FRAMING_OPTIONS.map((f) => (
+                          <option key={f} value={f}>{f}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Dimensions
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="100 × 80 cm"
+                        value={form.dimensions}
+                        onChange={(e) => setForm({ ...form, dimensions: e.target.value })}
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Year
+                      </label>
+                      <input
+                        type="text"
+                        value={form.year}
+                        onChange={(e) => setForm({ ...form, year: e.target.value })}
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Weight
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="3.8 kg"
+                        value={form.weight}
+                        onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Artwork Photo Upload & Presets */}
+                  <div className="p-3.5 rounded-xl border border-gray-200 bg-gray-50/70 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-gray-700">
+                        Artwork Photo *
+                      </label>
+                      {isUploadingImage && (
+                        <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading image...
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <label className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-emerald-600/30 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold cursor-pointer transition-colors shrink-0 shadow-2xs">
+                        <Upload className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Upload Photo</span>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={isUploadingImage}
+                          className="hidden"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Or paste custom image URL / Cloudinary URL"
+                        value={form.image}
+                        onChange={(e) => {
+                          setForm({ ...form, image: e.target.value });
+                          setImagePreviewUrl(e.target.value);
+                        }}
+                        className="flex-1 px-3 py-2 text-xs font-mono border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#128C38]"
+                      />
+                    </div>
+
+                    {/* Preset Thumbnails */}
+                    <div>
+                      <span className="text-[10px] text-gray-400 font-semibold block mb-1">
+                        Or select sample preset:
+                      </span>
+                      <div className="grid grid-cols-5 gap-2">
+                        {ARTWORK_IMAGE_PRESETS.map((preset) => (
+                          <button
+                            key={preset.url}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, image: preset.url });
+                              setImagePreviewUrl(preset.url);
+                            }}
+                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                              (imagePreviewUrl || form.image) === preset.url
+                                ? "border-[#128C38] scale-105 shadow-xs"
+                                : "border-gray-200 opacity-70 hover:opacity-100"
+                            }`}
+                            title={preset.label}
+                          >
+                            <img
+                              src={preset.url}
+                              alt={preset.label}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price & Real-Time Net Payout Calculation */}
+                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2.5">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Listing Price (RWF) *
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        min={10000}
+                        step={5000}
+                        value={form.price}
+                        onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                        className="w-full px-3.5 py-2 text-xs font-bold font-mono border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-[#128C38]"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200 text-[11px]">
+                      <div>
+                        <span className="text-gray-400 block">Gross Price:</span>
+                        <span className="font-bold text-gray-800">{formGross.toLocaleString()} RWF</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block">Platform Comm (30%):</span>
+                        <span className="font-bold text-rose-600">- {(formCommission + formTax).toLocaleString()} RWF</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block">Your Net Payout (70%):</span>
+                        <span className="font-bold text-[#128C38] text-xs">{formNet.toLocaleString()} RWF</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
-                    <span className="text-gray-400 block">Your Net Payout (70%):</span>
-                    <span className="font-bold text-[#128C38] text-xs">{formNet.toLocaleString()} RWF</span>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Artwork Story / Artist Statement
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Inspiration, organic pigments, traditional motifs, philosophical narrative..."
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                    <label className="flex items-center gap-2 text-xs font-bold text-gray-800 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.certificateOfAuthenticity}
+                        onChange={(e) => setForm({ ...form, certificateOfAuthenticity: e.target.checked })}
+                        className="w-4 h-4 text-[#128C38] rounded focus:ring-[#128C38] accent-[#128C38]"
+                      />
+                      <span>Include Certificate of Authenticity (COA)</span>
+                    </label>
+
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-bold text-gray-700">Status:</label>
+                      <select
+                        value={form.status}
+                        onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white"
+                      >
+                        <option value="Published">Published</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Sold">Sold</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Right Column: Live Public Card Preview ── */}
+                <div className="lg:col-span-5 bg-gray-50 border border-gray-200 p-4 sm:p-5 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                      Live Public Card Preview
+                    </span>
+                    <span className="text-[10px] font-mono text-[#128C38] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
+                      Live /gallery View
+                    </span>
+                  </div>
+
+                  {/* Public Gallery Card Replica */}
+                  <div className="bg-white border border-gray-200 shadow-md rounded-2xl overflow-hidden transition-all">
+                    <div className="relative aspect-4/3 bg-gray-100 overflow-hidden">
+                      <img
+                        src={resolveMediaUrl(imagePreviewUrl || form.image, FALLBACK_ARTWORK_IMAGE)}
+                        alt={form.title || "Artwork Preview"}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = FALLBACK_ARTWORK_IMAGE;
+                        }}
+                      />
+
+                      {/* Top Dimensions Badge */}
+                      <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-2xs text-white text-[10px] font-mono px-2 py-0.5 rounded-md shadow">
+                        {form.dimensions || "100 × 80 cm"}
+                      </div>
+
+                      {/* Status Badge */}
+                      <div className="absolute top-2.5 left-2.5">
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow ${
+                            form.status === "Published"
+                              ? "bg-emerald-600 text-white"
+                              : form.status === "Sold"
+                              ? "bg-slate-800 text-white"
+                              : "bg-amber-500 text-white"
+                          }`}
+                        >
+                          {form.status}
+                        </span>
+                      </div>
+
+                      {/* COA Badge */}
+                      {form.certificateOfAuthenticity && (
+                        <div className="absolute bottom-2.5 left-2.5 bg-amber-500/95 backdrop-blur-xs text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md shadow flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3" />
+                          <span>COA Included</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      <div className="text-[11px] text-gray-500 font-medium flex items-center justify-between">
+                        <span>{form.artistName || "Jean Luc Habimana"}</span>
+                        <span>{form.artistCity || "Kigali"} ({form.year || "2026"})</span>
+                      </div>
+
+                      <h4 className="text-sm font-bold text-gray-900 leading-snug line-clamp-1">
+                        {form.title || "Untitled Artwork"}
+                      </h4>
+
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {form.medium || "Contemporary Art"}
+                        </span>
+                        <span className="text-[10px] text-gray-500">
+                          • {form.framing || "Framed"}
+                        </span>
+                      </div>
+
+                      <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-gray-400 block">Collector Price</span>
+                          <span className="text-sm font-extrabold text-gray-900">
+                            {Number(form.price || 0).toLocaleString()} RWF
+                          </span>
+                        </div>
+                        <span className="text-[10px] uppercase font-bold text-[#128C38] bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                          Escrow Protected
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Summary Note */}
+                  <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl text-[11px] text-emerald-900 space-y-1">
+                    <div className="font-bold flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-[#128C38]" />
+                      <span>Artist Guaranteed Payout</span>
+                    </div>
+                    <p className="text-gray-600 text-[10px] leading-relaxed">
+                      Upon confirmed delivery to collector, your net share of{" "}
+                      <strong className="text-gray-900">{formNet.toLocaleString()} RWF</strong> is automatically released to your registered MTN MoMo / Bank account.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Description / Story</label>
-                <textarea
-                  rows={3}
-                  placeholder="Inspiration, organic pigments, traditional motifs..."
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3.5 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-[#128C38]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <label className="flex items-center gap-2 text-xs font-bold text-gray-800 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.certificateOfAuthenticity}
-                    onChange={(e) => setForm({ ...form, certificateOfAuthenticity: e.target.checked })}
-                    className="w-4 h-4 text-[#128C38] rounded focus:ring-[#128C38]"
-                  />
-                  <span>Include Certificate of Authenticity (COA)</span>
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-bold text-gray-700">Status:</label>
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                    className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white"
-                  >
-                    <option value="Published">Published</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Sold">Sold</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
+              {/* ── Modal Footer Actions ── */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl"
+                  className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#128C38] hover:bg-[#0E6C2B] text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+                  disabled={isSaving || isUploadingImage}
+                  className="px-5 py-2.5 bg-[#128C38] hover:bg-[#0E6C2B] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
                 >
-                  {editingId ? "Save Changes" : "Publish to Gallery"}
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving to Gallery...</span>
+                    </>
+                  ) : (
+                    <span>{editingId ? "Save Changes" : "Publish to Gallery"}</span>
+                  )}
                 </button>
               </div>
             </form>

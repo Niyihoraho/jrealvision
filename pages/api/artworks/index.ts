@@ -51,19 +51,69 @@ function unpackMetadata(desc: string | null | undefined): Partial<Artwork> {
   return { description: desc };
 }
 
+function mapProductToArtwork(p: any): Artwork {
+  const meta = unpackMetadata(p.description);
+  const frontImg = Array.isArray(p.images) && p.images[0] ? p.images[0] : (p.image || "/image/gallery/imigongo-fusion.jpg");
+  const detailImg = Array.isArray(p.images) && p.images[1] ? p.images[1] : frontImg;
+  const inRoomImg = Array.isArray(p.images) && p.images[2] ? p.images[2] : frontImg;
+
+  return {
+    id: p.id,
+    title: p.name,
+    artistId: "artist-jreal",
+    artistName: meta.artistName || "Verified Rwandan Artist",
+    artistCity: meta.artistCity || "Kigali",
+    artistAvatar: "/image/photography/wedding.jpg",
+    artistBio: "Curated contemporary artist represented on JREAL Fine Art Marketplace.",
+    artistPhone: "+250 788 123 456",
+    artistVerified: true,
+    description: meta.description || p.description || "",
+    medium: meta.medium || "Acrylic on Canvas",
+    dimensions: meta.dimensions || "100 x 80 cm",
+    framing: (meta.framing || "Framed (Solid Wood)") as any,
+    price: Number(p.price) || 0,
+    images: {
+      front: frontImg,
+      detail: detailImg,
+      inRoom: inRoomImg,
+    },
+    status: p.stock === 0 ? "Sold" : (p.active ? (meta.status || "Published") : "Draft"),
+    year: meta.year || "2026",
+    certificateOfAuthenticity: meta.certificateOfAuthenticity !== false,
+    featured: Boolean(p.featured),
+    views: 350,
+    likes: 45,
+    weight: meta.weight || "4.0 kg",
+    curatorNotes: meta.curatorNotes || "Certified authentic and protected by platform escrow.",
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // ─── GET: List Curated Artworks ─────────────────────────────────────────────
   if (req.method === "GET") {
     try {
-      const { medium, city, status, search, featured } = req.query;
+      const { id, medium, city, status, search, featured } = req.query;
+
+      // Single item query
+      if (id && typeof id === "string") {
+        const product = await prisma.product.findUnique({ where: { id } }).catch(() => null);
+        if (product) {
+          return res.status(200).json({ success: true, artwork: mapProductToArtwork(product) });
+        }
+        const fallback = initialArtworks.find((a) => a.id === id);
+        if (fallback) {
+          return res.status(200).json({ success: true, artwork: fallback });
+        }
+        return res.status(404).json({ error: "Artwork not found" });
+      }
 
       // Check if artworks exist in Supabase products table
       const count = await prisma.product.count({
         where: { category: { startsWith: "art-gallery" } },
       }).catch(() => 0);
 
-      // Auto-seed if none exist
-      if (count === 0 && initialArtworks && initialArtworks.length > 0) {
+      // Auto-seed if missing items
+      if (count < initialArtworks.length && initialArtworks && initialArtworks.length > 0) {
         try {
           for (const art of initialArtworks) {
             const exists = await prisma.product.findUnique({ where: { id: art.id } }).catch(() => null);
@@ -101,42 +151,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       // Map back to full Artwork objects
-      let mappedArtworks: Artwork[] = (products as any[]).map((p: any) => {
-        const meta = unpackMetadata(p.description);
-        const frontImg = p.images[0] || "/image/gallery/imigongo-fusion.jpg";
-        const detailImg = p.images[1] || frontImg;
-        const inRoomImg = p.images[2] || frontImg;
-
-        return {
-          id: p.id,
-          title: p.name,
-          artistId: "artist-jreal",
-          artistName: meta.artistName || "Verified Rwandan Artist",
-          artistCity: meta.artistCity || "Kigali",
-          artistAvatar: "/image/photography/wedding.jpg",
-          artistBio: "Curated contemporary artist represented on JREAL Fine Art Marketplace.",
-          artistPhone: "+250 788 123 456",
-          artistVerified: true,
-          description: meta.description || p.description || "",
-          medium: meta.medium || "Acrylic on Canvas",
-          dimensions: meta.dimensions || "100 x 80 cm",
-          framing: (meta.framing || "Framed (Solid Wood)") as any,
-          price: Number(p.price) || 0,
-          images: {
-            front: frontImg,
-            detail: detailImg,
-            inRoom: inRoomImg,
-          },
-          status: p.stock === 0 ? "Sold" : (p.active ? "Published" : "Draft"),
-          year: meta.year || "2026",
-          certificateOfAuthenticity: meta.certificateOfAuthenticity !== false,
-          featured: p.featured,
-          views: 350,
-          likes: 45,
-          weight: meta.weight || "4.0 kg",
-          curatorNotes: meta.curatorNotes || "Certified authentic and protected by platform escrow.",
-        };
-      });
+      let mappedArtworks: Artwork[] = (products as any[]).map(mapProductToArtwork);
 
       // If database returned fewer items or none, merge with initialArtworks ensuring uniqueness
       if (mappedArtworks.length < initialArtworks.length) {
@@ -175,17 +190,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── POST: Upload New Artwork to Supabase ──────────────────────────────────
   if (req.method === "POST") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     try {
       const {
         title,
-        artistName,
+        name,
+        artistName = "Jean Luc Habimana",
         artistCity = "Kigali",
         medium = "Acrylic on Canvas",
         dimensions = "100 x 80 cm",
         framing = "Framed (Solid Wood)",
         price,
         year = "2026",
-        weight = "3.5 kg",
+        weight = "3.8 kg",
         certificateOfAuthenticity = true,
         image,
         images,
@@ -194,7 +211,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         featured = false,
       } = req.body;
 
-      if (!title || !price) {
+      const artworkTitle = title || name;
+      if (!artworkTitle || !price) {
         return res.status(400).json({ error: "Artwork title and price are required" });
       }
 
@@ -205,7 +223,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         : ["/image/gallery/imigongo-fusion.jpg", "/image/gallery/imigongo-fusion.jpg", "/image/gallery/imigongo-fusion.jpg"];
 
       const packedDesc = packMetadata({
-        description,
+        description: description || "",
         artistName,
         artistCity,
         medium,
@@ -219,7 +237,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const newProduct = await prisma.product.create({
         data: {
-          name: title,
+          name: artworkTitle,
           description: packedDesc,
           category: "art-gallery",
           price: Number(price) || 0,
@@ -230,37 +248,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      const createdArtwork: Artwork = {
-        id: newProduct.id,
-        title: newProduct.name,
-        artistId: "artist-jreal",
-        artistName,
-        artistCity,
-        artistAvatar: "/image/photography/wedding.jpg",
-        artistBio: "Curated contemporary artist represented on JREAL Fine Art Marketplace.",
-        artistPhone: "+250 788 123 456",
-        artistVerified: true,
-        description: description || "",
-        medium,
-        dimensions,
-        framing: framing as any,
-        price: Number(newProduct.price),
-        images: {
-          front: imageList[0],
-          detail: imageList[1] || imageList[0],
-          inRoom: imageList[2] || imageList[0],
-        },
-        status: status as any,
-        year,
-        certificateOfAuthenticity: Boolean(certificateOfAuthenticity),
-        featured: Boolean(featured),
-        views: 1,
-        likes: 0,
-        weight,
-        curatorNotes: "Verified original artwork backed by platform escrow.",
-      };
+      const createdArtwork = mapProductToArtwork(newProduct);
 
-      return res.status(201).json({ success: true, artwork: createdArtwork });
+      return res.status(201).json({ success: true, artwork: createdArtwork, product: newProduct });
     } catch (err: any) {
       console.error("[artworks POST]", err);
       return res.status(500).json({ error: err.message || "Failed to create artwork in database" });
@@ -269,10 +259,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── PUT / PATCH: Update Artwork ───────────────────────────────────────────
   if (req.method === "PUT" || req.method === "PATCH") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     try {
       const {
         id,
         title,
+        name,
         artistName,
         artistCity,
         medium,
@@ -294,8 +286,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: "Artwork ID is required" });
       }
 
+      // Check if record exists
+      const existing = await prisma.product.findUnique({ where: { id: targetId } }).catch(() => null);
+
+      if (!existing) {
+        // Fallback: If record was in initialArtworks or not yet saved, upsert it
+        const fallbackArt = initialArtworks.find((a) => a.id === targetId);
+        const fallbackTitle = title || name || fallbackArt?.title || "Curated Artwork";
+        const fallbackPrice = price !== undefined ? Number(price) : (fallbackArt?.price || 200000);
+        const fallbackImages = images
+          ? (Array.isArray(images) ? images : [images])
+          : image
+          ? [image, image, image]
+          : [fallbackArt?.images?.front || "/image/gallery/imigongo-fusion.jpg"];
+
+        const packedDesc = packMetadata({
+          description: description !== undefined ? description : (fallbackArt?.description || ""),
+          artistName: artistName || fallbackArt?.artistName || "Jean Luc Habimana",
+          artistCity: artistCity || fallbackArt?.artistCity || "Kigali",
+          medium: medium || fallbackArt?.medium || "Acrylic on Canvas",
+          dimensions: dimensions || fallbackArt?.dimensions || "100 x 80 cm",
+          framing: framing || fallbackArt?.framing || "Framed (Solid Wood)",
+          year: year || fallbackArt?.year || "2026",
+          weight: weight || fallbackArt?.weight || "3.8 kg",
+          certificateOfAuthenticity: certificateOfAuthenticity !== undefined ? Boolean(certificateOfAuthenticity) : true,
+          status: status || fallbackArt?.status || "Published",
+        });
+
+        const created = await prisma.product.create({
+          data: {
+            id: targetId,
+            name: fallbackTitle,
+            description: packedDesc,
+            category: "art-gallery",
+            price: fallbackPrice,
+            stock: status === "Sold" ? 0 : 1,
+            images: fallbackImages,
+            featured: Boolean(featured ?? fallbackArt?.featured),
+            active: status !== "Draft",
+          },
+        });
+
+        return res.status(200).json({ success: true, artwork: mapProductToArtwork(created), product: created });
+      }
+
+      // Existing record found: merge fields over existing metadata
+      const existingMeta = unpackMetadata(existing.description);
       const updateData: any = {};
-      if (title) updateData.name = title;
+
+      const artworkTitle = title || name;
+      if (artworkTitle) updateData.name = artworkTitle;
       if (price !== undefined) updateData.price = Number(price);
       if (featured !== undefined) updateData.featured = Boolean(featured);
       if (status !== undefined) {
@@ -308,27 +348,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         updateData.images = [image, image, image];
       }
 
-      // Re-pack metadata
-      const packedDesc = packMetadata({
-        description,
-        artistName,
-        artistCity,
-        medium,
-        dimensions,
-        framing,
-        year,
-        weight,
-        certificateOfAuthenticity,
-        status,
-      });
-      updateData.description = packedDesc;
+      // Merge metadata values
+      const mergedMeta = {
+        description: description !== undefined ? description : (existingMeta.description || ""),
+        artistName: artistName !== undefined ? artistName : (existingMeta.artistName || "Jean Luc Habimana"),
+        artistCity: artistCity !== undefined ? artistCity : (existingMeta.artistCity || "Kigali"),
+        medium: medium !== undefined ? medium : (existingMeta.medium || "Acrylic on Canvas"),
+        dimensions: dimensions !== undefined ? dimensions : (existingMeta.dimensions || "100 x 80 cm"),
+        framing: framing !== undefined ? framing : (existingMeta.framing || "Framed (Solid Wood)"),
+        year: year !== undefined ? year : (existingMeta.year || "2026"),
+        weight: weight !== undefined ? weight : (existingMeta.weight || "3.8 kg"),
+        certificateOfAuthenticity: certificateOfAuthenticity !== undefined ? Boolean(certificateOfAuthenticity) : (existingMeta.certificateOfAuthenticity !== false),
+        status: status !== undefined ? status : (existingMeta.status || "Published"),
+        curatorNotes: existingMeta.curatorNotes || "Certified authentic and protected by platform escrow.",
+      };
+
+      updateData.description = packMetadata(mergedMeta);
 
       const updated = await prisma.product.update({
         where: { id: targetId },
         data: updateData,
       });
 
-      return res.status(200).json({ success: true, product: updated });
+      return res.status(200).json({ success: true, artwork: mapProductToArtwork(updated), product: updated });
     } catch (err: any) {
       console.error("[artworks PUT]", err);
       return res.status(500).json({ error: err.message || "Failed to update artwork in database" });
@@ -337,15 +379,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── DELETE: Remove Artwork ────────────────────────────────────────────────
   if (req.method === "DELETE") {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     try {
       const targetId = (req.query.id as string) || req.body?.id;
       if (!targetId) {
         return res.status(400).json({ error: "Artwork ID is required" });
       }
 
-      await prisma.product.delete({
-        where: { id: targetId },
-      });
+      // Try hard delete or soft delete if linked to orders
+      try {
+        await prisma.product.delete({
+          where: { id: targetId },
+        });
+      } catch {
+        await prisma.product.update({
+          where: { id: targetId },
+          data: { active: false },
+        });
+      }
 
       return res.status(200).json({ success: true, message: "Artwork deleted successfully" });
     } catch (err: any) {

@@ -119,3 +119,4 @@ runWebAudit().catch(err => {
   console.error("Web Audit Failure:", err);
   process.exit(1);
 });
+
