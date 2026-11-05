@@ -1708,17 +1708,17 @@ export default function AdminDashboardPage() {
             throw new Error(errData.error || "Failed to update artwork in database");
           }
 
-          const data = await res.json().catch(() => ({}));
-          if (data?.artwork) {
+          const putData = await res.json().catch(() => ({}));
+          if (putData?.artwork) {
             setArtworks((prev) => {
               const updated = prev.map((a) =>
                 a.id === editingId
                   ? {
                       ...a,
                       ...artPayload,
-                      title: data.artwork.title || artPayload.title,
-                      price: data.artwork.price || artPayload.price,
-                      image: resolveMediaUrl(data.artwork.images?.front || data.artwork.image || artPayload.image, FALLBACK_ARTWORK_IMAGE),
+                      title: putData.artwork.title || artPayload.title,
+                      price: putData.artwork.price || artPayload.price,
+                      image: resolveMediaUrl(putData.artwork.images?.front || putData.artwork.image || artPayload.image, FALLBACK_ARTWORK_IMAGE),
                     }
                   : a
               );
@@ -1755,11 +1755,11 @@ export default function AdminDashboardPage() {
             throw new Error(errData.error || "Failed to create artwork in database");
           }
 
-          const data = await res.json().catch(() => ({}));
-          if (data?.artwork?.id) {
+          const postData = await res.json().catch(() => ({}));
+          if (postData?.artwork?.id) {
             setArtworks((prev) => {
               const updated = prev.map((a) =>
-                a.id === tempId ? { ...a, id: data.artwork.id } : a
+                a.id === tempId ? { ...a, id: postData.artwork.id } : a
               );
               try {
                 localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));

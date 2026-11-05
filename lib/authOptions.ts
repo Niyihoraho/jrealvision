@@ -55,9 +55,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
         role: { label: "Role", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<any> {
         if (!credentials?.email) {
-          throw new Error("Email is required");
+          return null;
         }
 
         const cleanEmail = credentials.email.trim().toLowerCase();

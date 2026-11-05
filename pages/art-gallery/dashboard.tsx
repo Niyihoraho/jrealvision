@@ -372,10 +372,10 @@ export default function ArtGalleryDashboardPage() {
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData.error || "Failed to update artwork in database");
         } else {
-          const data = await res.json().catch(() => ({}));
-          if (data?.artwork) {
+          const updateResData = await res.json().catch(() => ({}));
+          if (updateResData?.artwork) {
             setArtworks((prev) => {
-              const updated = prev.map((a) => (a.id === editingId ? { ...a, ...data.artwork } : a));
+              const updated = prev.map((a) => (a.id === editingId ? { ...a, ...updateResData.artwork } : a));
               try {
                 localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
               } catch {}
@@ -445,10 +445,10 @@ export default function ArtGalleryDashboardPage() {
           throw new Error(errData.error || "Failed to create artwork in database");
         }
 
-        const data = await res.json().catch(() => ({}));
-        if (data?.artwork?.id) {
+        const createResData = await res.json().catch(() => ({}));
+        if (createResData?.artwork?.id) {
           setArtworks((prev) => {
-            const updated = prev.map((a) => (a.id === tempId ? { ...a, ...data.artwork, id: data.artwork.id } : a));
+            const updated = prev.map((a) => (a.id === tempId ? { ...a, ...createResData.artwork, id: createResData.artwork.id } : a));
             try {
               localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
             } catch {}

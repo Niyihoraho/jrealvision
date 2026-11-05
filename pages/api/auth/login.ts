@@ -61,8 +61,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // If user is accessing merchant/artist portal or admin or is superadmin, promote role
-        let effectiveRole = isSuperadmin ? "ADMIN" : user.role;
-        if (isSuperadmin || (targetRole !== "CUSTOMER" && user.role !== targetRole)) {
+        let effectiveRole: string = isSuperadmin ? "ADMIN" : user.role;
+        if (isSuperadmin || (targetRole !== "CUSTOMER" && (user.role as string) !== targetRole)) {
           try {
             await prisma.user.update({
               where: { id: user.id },
