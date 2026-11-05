@@ -375,7 +375,7 @@ export default function ArtGalleryDashboardPage() {
           const updateResData = await res.json().catch(() => ({}));
           if (updateResData?.artwork) {
             setArtworks((prev) => {
-              const updated = prev.map((a) => (a.id === editingId ? { ...a, ...updateResData.artwork } : a));
+              const updated = prev.map((a) => (a?.id === editingId ? { ...a, ...updateResData.artwork } : a));
               try {
                 localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
               } catch {}

@@ -26,8 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === "GET") {
     return res.status(200).json({
       configured,
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME || "qfhbfsci",
-      apiKey: process.env.CLOUDINARY_API_KEY || "711159128874623",
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || "",
+      apiKey: process.env.CLOUDINARY_API_KEY || "",
       hasSecret: configured,
       syncedCount: Object.keys(currentMap).length,
       syncedImages: currentMap,

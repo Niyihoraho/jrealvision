@@ -1247,22 +1247,22 @@ export default function AdminDashboardPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
-          const mappedArt: ArtworkListing[] = data.artworks.map((a: any) => ({
-            id: a.id,
+          const mappedArt: ArtworkListing[] = data.artworks.filter(Boolean).map((a: any) => ({
+            id: a?.id || `art-${Date.now()}`,
             type: "ARTWORK",
-            title: a.title,
-            artistName: a.artistName || "JREAL Curated Studio",
-            artistCity: a.artistCity || "Kigali",
-            medium: a.medium || "Acrylic on Canvas",
-            dimensions: a.dimensions || "100 x 80 cm",
-            framing: a.framing || "Framed (Solid Wood)",
-            price: Number(a.price) || 0,
-            year: a.year || "2026",
-            weight: a.weight || "3.5 kg",
-            certificateOfAuthenticity: a.certificateOfAuthenticity !== false,
-            image: resolveMediaUrl(a.images?.front || a.image, FALLBACK_ARTWORK_IMAGE),
-            description: a.description || "",
-            status: a.status || "Published",
+            title: a?.title || "Curated Artwork",
+            artistName: a?.artistName || "JREAL Curated Studio",
+            artistCity: a?.artistCity || "Kigali",
+            medium: a?.medium || "Acrylic on Canvas",
+            dimensions: a?.dimensions || "100 x 80 cm",
+            framing: a?.framing || "Framed (Solid Wood)",
+            price: Number(a?.price) || 0,
+            year: a?.year || "2026",
+            weight: a?.weight || "3.5 kg",
+            certificateOfAuthenticity: a?.certificateOfAuthenticity !== false,
+            image: resolveMediaUrl(a?.images?.front || a?.image, FALLBACK_ARTWORK_IMAGE),
+            description: a?.description || "",
+            status: a?.status || "Published",
             sales: 0,
           }));
           setArtworks(mappedArt);
@@ -1717,8 +1717,9 @@ export default function AdminDashboardPage() {
                       ...a,
                       ...artPayload,
                       title: putData.artwork.title || artPayload.title,
-                      price: putData.artwork.price || artPayload.price,
+                      price: putData.artwork.price !== undefined ? Number(putData.artwork.price) : artPayload.price,
                       image: resolveMediaUrl(putData.artwork.images?.front || putData.artwork.image || artPayload.image, FALLBACK_ARTWORK_IMAGE),
+                      description: putData.artwork.description !== undefined ? putData.artwork.description : artPayload.description,
                     }
                   : a
               );

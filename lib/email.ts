@@ -21,7 +21,7 @@ function getTransporter(): nodemailer.Transporter {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT) || 587;
   const user = (process.env.SMTP_USER || "jrealvision@gmail.com").trim();
-  const pass = (process.env.SMTP_PASS || "qcegsdmxgpvnycxu").replace(/\s+/g, "");
+  const pass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
 
   return nodemailer.createTransport({
     host,

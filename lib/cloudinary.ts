@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 // Initialize Cloudinary
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "qfhbfsci";
-const apiKey = process.env.CLOUDINARY_API_KEY || "711159128874623";
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.CLOUDINARY_API_KEY;
 const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
 // Also parse CLOUDINARY_URL if provided
