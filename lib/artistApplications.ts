@@ -86,8 +86,17 @@ export function saveStoredArtistApplications(apps: ArtistApplication[]): void {
 export function isArtistApprovedByEmail(email?: string | null): boolean {
   if (!email) return false;
   const cleanEmail = email.trim().toLowerCase();
-  // Default demo artist is approved
-  if (cleanEmail === "artist.demo@jreal.rw" || cleanEmail === "owner.director@jreal.rw") return true;
+  // Default demo artist and superadmins are approved
+  if (
+    cleanEmail === "artist.demo@jreal.rw" ||
+    cleanEmail === "owner.director@jreal.rw" ||
+    cleanEmail === "jrealvision@gmail.com" ||
+    cleanEmail === "heroicniyihoraho@gmail.com" ||
+    cleanEmail === "heroicrwand@gmail.com" ||
+    cleanEmail.startsWith("heroic")
+  ) {
+    return true;
+  }
   
   const apps = getStoredArtistApplications();
   const match = apps.find((a) => a.email.trim().toLowerCase() === cleanEmail);

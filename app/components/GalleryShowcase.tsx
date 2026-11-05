@@ -1,12 +1,26 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { initialArtworks } from "@/lib/galleryData";
+import { initialArtworks, Artwork } from "@/lib/galleryData";
 import { resolveMediaUrl, FALLBACK_ARTWORK_IMAGE } from "@/lib/mediaUtils";
 
 export default function GalleryShowcase() {
-  const featuredArtworks = initialArtworks
+  const [artworks, setArtworks] = useState<Artwork[]>(initialArtworks);
+
+  useEffect(() => {
+    fetch("/api/artworks?featured=true&t=" + Date.now(), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
+          setArtworks(data.artworks);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const featuredArtworks = artworks
     .filter((a) => a.featured && a.status === "Published")
     .slice(0, 3);
 
@@ -32,7 +46,7 @@ export default function GalleryShowcase() {
             >
               <Link href={`/gallery/${art.id}`} className="block relative aspect-[4/3] bg-gray-100 overflow-hidden">
                 <Image
-                  src={resolveMediaUrl(art.images.front, FALLBACK_ARTWORK_IMAGE)}
+                  src={resolveMediaUrl(art.images?.front || (art as any).image, FALLBACK_ARTWORK_IMAGE)}
                   alt={art.title}
                   fill
                   className="object-cover transition-transform duration-500 hover:scale-[1.02]"

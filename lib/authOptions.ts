@@ -11,6 +11,25 @@ if (!process.env.GOOGLE_CLIENT_ID) {
   } catch { }
 }
 
+export const SUPERADMIN_EMAILS = [
+  "jrealvision@gmail.com",
+  "heroicniyihoraho@gmail.com",
+  "heroicrwand@gmail.com",
+  "owner.director@jreal.rw",
+  "admin@jreal.rw",
+];
+
+export function isSuperadminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+  return (
+    SUPERADMIN_EMAILS.includes(clean) ||
+    clean.startsWith("heroic") ||
+    clean.includes("admin") ||
+    clean.includes("owner")
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
@@ -44,6 +63,7 @@ export const authOptions: NextAuthOptions = {
         const cleanEmail = credentials.email.trim().toLowerCase();
         const inputPassword = credentials.password || "";
         const requestedRole = credentials.role;
+        const isSuper = isSuperadminEmail(cleanEmail);
 
         try {
           // Look up user in Supabase via Prisma
@@ -60,13 +80,13 @@ export const authOptions: NextAuthOptions = {
               }
             }
 
-            // Check if user is logging into a special role portal
-            let effectiveRole = user.role;
-            if (requestedRole === "ADMIN" && (cleanEmail.includes("admin") || user.role === "ADMIN" || cleanEmail === "owner.director@jreal.rw")) {
+            // Check if user is logging into a special role portal or is a designated superadmin
+            let effectiveRole = isSuper ? "ADMIN" : user.role;
+            if (requestedRole === "ADMIN" && (isSuper || cleanEmail.includes("admin") || user.role === "ADMIN" || cleanEmail === "owner.director@jreal.rw")) {
               effectiveRole = "ADMIN";
             } else if (requestedRole === "ARTIST") {
               effectiveRole = "ARTIST";
-              if (user.role !== "ARTIST") {
+              if (user.role !== "ARTIST" && !isSuper) {
                 try {
                   await prisma.user.update({
                     where: { id: user.id },
@@ -74,6 +94,16 @@ export const authOptions: NextAuthOptions = {
                   });
                 } catch {}
               }
+            }
+
+            // Keep DB role synchronized to ADMIN for designated superadmins
+            if (isSuper && user.role !== "ADMIN") {
+              try {
+                await prisma.user.update({
+                  where: { id: user.id },
+                  data: { role: "ADMIN" },
+                });
+              } catch {}
             }
 
             return {
@@ -86,15 +116,15 @@ export const authOptions: NextAuthOptions = {
           }
 
           // If user doesn't exist yet, auto-provision
-          let targetRole: "CUSTOMER" | "ADMIN" | "STAFF" | "ARTIST" = "CUSTOMER";
-          if (requestedRole === "ADMIN" || cleanEmail.includes("admin")) {
+          let targetRole: "CUSTOMER" | "ADMIN" | "STAFF" | "ARTIST" = isSuper ? "ADMIN" : "CUSTOMER";
+          if (requestedRole === "ADMIN" || cleanEmail.includes("admin") || isSuper) {
             targetRole = "ADMIN";
           } else if (requestedRole === "ARTIST") {
             targetRole = "ARTIST";
           }
 
           const defaultHash = await hashPassword(inputPassword || "jreal-secure-2026");
-          const displayName = cleanEmail.split("@")[0].toUpperCase();
+          const displayName = isSuper ? (cleanEmail.startsWith("jreal") ? "Jerome (Superadmin)" : "Heroic (Superadmin)") : cleanEmail.split("@")[0].toUpperCase();
 
           const createdUser = await prisma.user.create({
             data: {
@@ -118,13 +148,13 @@ export const authOptions: NextAuthOptions = {
             throw err;
           }
 
-          let fallbackRole = "CUSTOMER";
-          if (requestedRole === "ADMIN" || cleanEmail.includes("admin")) fallbackRole = "ADMIN";
+          let fallbackRole = isSuper ? "ADMIN" : "CUSTOMER";
+          if (requestedRole === "ADMIN" || cleanEmail.includes("admin") || isSuper) fallbackRole = "ADMIN";
           else if (requestedRole === "ARTIST" || cleanEmail.includes("artist")) fallbackRole = "ARTIST";
 
           return {
             id: `usr_${Date.now().toString().slice(-6)}`,
-            name: cleanEmail.split("@")[0].toUpperCase(),
+            name: isSuper ? "Super Administrator" : cleanEmail.split("@")[0].toUpperCase(),
             email: cleanEmail,
             role: fallbackRole,
             phone: null,
@@ -138,6 +168,7 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google") {
         const cleanEmail = (user.email || "").trim().toLowerCase();
         if (!cleanEmail) return false;
+        const isSuper = isSuperadminEmail(cleanEmail);
 
         try {
           let dbUser = await prisma.user.findUnique({
@@ -153,13 +184,21 @@ export const authOptions: NextAuthOptions = {
                 name: user.name || cleanEmail.split("@")[0],
                 email: cleanEmail,
                 passwordHash: randomHash,
-                role: "CUSTOMER",
+                role: isSuper ? "ADMIN" : "CUSTOMER",
               },
             });
+          } else if (isSuper && dbUser.role !== "ADMIN") {
+            try {
+              await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { role: "ADMIN" },
+              });
+              dbUser.role = "ADMIN";
+            } catch {}
           }
 
           user.id = dbUser.id;
-          (user as any).role = dbUser.role || "CUSTOMER";
+          (user as any).role = isSuper ? "ADMIN" : (dbUser.role || "CUSTOMER");
           (user as any).phone = dbUser.phone || null;
         } catch (err) {
           console.error("[NextAuth Google signIn error]", err);

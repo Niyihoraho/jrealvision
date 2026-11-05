@@ -89,6 +89,11 @@ function mapProductToArtwork(p: any): Artwork {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Prevent any browser or intermediary proxy caching for dynamic API responses
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+
   // ─── GET: List Curated Artworks ─────────────────────────────────────────────
   if (req.method === "GET") {
     try {
@@ -97,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Single item query
       if (id && typeof id === "string") {
         const product = await prisma.product.findUnique({ where: { id } }).catch(() => null);
-        if (product) {
+        if (product && product.category === "art-gallery") {
           return res.status(200).json({ success: true, artwork: mapProductToArtwork(product) });
         }
         const fallback = initialArtworks.find((a) => a.id === id);
@@ -109,11 +114,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Check if artworks exist in Supabase products table
       const count = await prisma.product.count({
-        where: { category: { startsWith: "art-gallery" } },
+        where: { category: "art-gallery" },
       }).catch(() => 0);
 
-      // Auto-seed if missing items
-      if (count < initialArtworks.length && initialArtworks && initialArtworks.length > 0) {
+      // Auto-seed ONLY when table is completely empty on fresh setup
+      if (count === 0 && initialArtworks && initialArtworks.length > 0) {
         try {
           for (const art of initialArtworks) {
             const exists = await prisma.product.findUnique({ where: { id: art.id } }).catch(() => null);
@@ -142,10 +147,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      // Fetch from Supabase
+      // Fetch active gallery artworks from Supabase
       const products = await prisma.product.findMany({
         where: {
-          category: { startsWith: "art-gallery" },
+          category: "art-gallery",
         },
         orderBy: { createdAt: "desc" },
       });
@@ -153,11 +158,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Map back to full Artwork objects
       let mappedArtworks: Artwork[] = (products as any[]).map(mapProductToArtwork);
 
-      // If database returned fewer items or none, merge with initialArtworks ensuring uniqueness
-      if (mappedArtworks.length < initialArtworks.length) {
-        const existingIds = new Set(mappedArtworks.map((a) => a.id));
-        const missing = initialArtworks.filter((a) => !existingIds.has(a.id));
-        mappedArtworks = [...mappedArtworks, ...missing];
+      // Fallback only if database returned zero items
+      if (mappedArtworks.length === 0) {
+        mappedArtworks = [...initialArtworks];
       }
 
       // In-memory filters if query params provided
@@ -394,7 +397,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch {
         await prisma.product.update({
           where: { id: targetId },
-          data: { active: false },
+          data: { active: false, category: "art-gallery-deleted" },
         });
       }
 

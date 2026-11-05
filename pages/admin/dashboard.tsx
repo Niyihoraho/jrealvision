@@ -77,6 +77,7 @@ import {
   FALLBACK_PRODUCT_IMAGE,
   FALLBACK_ARTWORK_IMAGE,
 } from "@/lib/mediaUtils";
+import { initialArtworks } from "@/lib/galleryData";
 
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -236,62 +237,24 @@ const INITIAL_ADMIN_PRODUCTS: ProductListing[] = [
   },
 ];
 
-const INITIAL_ADMIN_ARTWORKS: ArtworkListing[] = [
-  {
-    id: "aart-1",
-    type: "ARTWORK",
-    title: "Imigongo Geometric Heritage & Modern Fusion",
-    artistName: "JREAL Curated Studio",
-    artistCity: "Kigali",
-    medium: "Imigongo Relief & Pigments on Wood",
-    dimensions: "100 × 80 cm",
-    framing: "Framed (Solid Wood)",
-    price: 320000,
-    year: "2026",
-    weight: "4.5 kg",
-    certificateOfAuthenticity: true,
-    image: resolveMediaUrl("/image/gallery/imigongo-fusion.jpg", FALLBACK_ARTWORK_IMAGE),
-    description: "Contemporary interpretation of sacred Rwandan Imigongo spiral patterns fused with organic earthy pigments.",
-    status: "Published",
-    sales: 2,
-  },
-  {
-    id: "aart-2",
-    type: "ARTWORK",
-    title: "Thousand Hills Morning Mist (Virunga Dawn)",
-    artistName: "JREAL Fine Art Collection",
-    artistCity: "Musanze",
-    medium: "Oil on Linen",
-    dimensions: "120 × 90 cm",
-    framing: "Framed (Floating Frame)",
-    price: 450000,
-    year: "2025",
-    weight: "5.2 kg",
-    certificateOfAuthenticity: true,
-    image: resolveMediaUrl("/image/gallery/thousand-hills.jpg", FALLBACK_ARTWORK_IMAGE),
-    description: "Large scale impressionist landscape capturing dawn over the Virunga volcanic peaks.",
-    status: "Published",
-    sales: 1,
-  },
-  {
-    id: "aart-3",
-    type: "ARTWORK",
-    title: "Kigali Midnight Jazz & Sisal Texture",
-    artistName: "JREAL Curated Studio",
-    artistCity: "Kigali",
-    medium: "Mixed Media & Sisal on Linen",
-    dimensions: "75 × 60 cm",
-    framing: "Stretched Canvas",
-    price: 240000,
-    year: "2026",
-    weight: "2.8 kg",
-    certificateOfAuthenticity: true,
-    image: resolveMediaUrl("/image/gallery/kigali-rhythm.jpg", FALLBACK_ARTWORK_IMAGE),
-    description: "Vibrant urban nightlife study rendered with indigenous sisal fiber textures and acrylic pigments.",
-    status: "Published",
-    sales: 0,
-  },
-];
+const INITIAL_ADMIN_ARTWORKS: ArtworkListing[] = initialArtworks.map((a) => ({
+  id: a.id,
+  type: "ARTWORK",
+  title: a.title,
+  artistName: a.artistName || "JREAL Curated Studio",
+  artistCity: a.artistCity || "Kigali",
+  medium: a.medium || "Contemporary Art",
+  dimensions: a.dimensions || "100 × 80 cm",
+  framing: a.framing || "Framed (Solid Wood)",
+  price: Number(a.price) || 0,
+  year: a.year || "2026",
+  weight: a.weight || "3.8 kg",
+  certificateOfAuthenticity: a.certificateOfAuthenticity !== false,
+  image: resolveMediaUrl(a.images?.front || (a as any).image, FALLBACK_ARTWORK_IMAGE),
+  description: a.description || "",
+  status: a.status || "Published",
+  sales: 0,
+}));
 
 // ─── Service Bookings & Production Orders ─────────────────────────────────────
 
@@ -1139,6 +1102,8 @@ export default function AdminDashboardPage() {
     { id: "u-3", name: "Amina Hirwa", email: "amina.hirwa@mail.rw", role: "Customer", joined: "2026-05-20" },
     { id: "u-4", name: "Kigali Print House", email: "print@kph.rw", role: "Seller", joined: "2026-02-10" },
     { id: "u-5", name: "Platform Owner", email: "owner.director@jreal.rw", role: "Admin", joined: "2025-11-01" },
+    { id: "u-6", name: "Jerome (Superadmin)", email: "jrealvision@gmail.com", role: "Admin", joined: "2026-10-03" },
+    { id: "u-7", name: "HEROIC (Superadmin)", email: "heroicniyihoraho@gmail.com", role: "Admin", joined: "2026-10-02" },
   ]);
 
   // ── Artist Applications & Representation Review State ──
@@ -1278,7 +1243,7 @@ export default function AdminDashboardPage() {
       .catch((err) => console.warn("[users load warning]:", err));
 
     // ── Fetch curated artworks from Supabase DB or local storage fallback ──
-    fetch("/api/artworks")
+    fetch("/api/artworks?t=" + Date.now(), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
@@ -1720,62 +1685,98 @@ export default function AdminDashboardPage() {
         price: Number(artForm.price),
       };
 
-      if (editingId) {
-        setArtworks((prev) => {
-          const updated = prev.map((a) =>
-            a.id === editingId ? { ...a, ...artPayload } : a
-          );
-          try {
-            localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
-          } catch {}
-          return updated;
-        });
-        fetch("/api/artworks", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingId, ...artPayload }),
-        }).catch((err) => console.warn("Failed to update artwork in DB:", err));
-      } else {
-        const tempId = `aart-${Date.now()}`;
-        const newA: ArtworkListing = {
-          id: tempId,
-          type: "ARTWORK",
-          ...artPayload,
-          sales: 0,
-        };
-        setArtworks((prev) => {
-          const updated = [newA, ...prev];
-          try {
-            localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
-          } catch {}
-          return updated;
-        });
+      try {
+        if (editingId) {
+          setArtworks((prev) => {
+            const updated = prev.map((a) =>
+              a.id === editingId ? { ...a, ...artPayload } : a
+            );
+            try {
+              localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
 
-        fetch("/api/artworks", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newA),
-        })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => {
-            if (data?.artwork) {
-              setArtworks((prev) => {
-                const updated = prev.map((a) =>
-                  a.id === tempId ? { ...a, id: data.artwork.id } : a
-                );
-                try {
-                  localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
-                } catch {}
-                return updated;
-              });
-            }
-          })
-          .catch((err) => console.warn("Failed to create artwork in DB:", err));
+          const res = await fetch("/api/artworks", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: editingId, ...artPayload }),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || "Failed to update artwork in database");
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (data?.artwork) {
+            setArtworks((prev) => {
+              const updated = prev.map((a) =>
+                a.id === editingId
+                  ? {
+                      ...a,
+                      ...artPayload,
+                      title: data.artwork.title || artPayload.title,
+                      price: data.artwork.price || artPayload.price,
+                      image: resolveMediaUrl(data.artwork.images?.front || data.artwork.image || artPayload.image, FALLBACK_ARTWORK_IMAGE),
+                    }
+                  : a
+              );
+              try {
+                localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
+        } else {
+          const tempId = `art-${Date.now()}`;
+          const newA: ArtworkListing = {
+            id: tempId,
+            type: "ARTWORK",
+            ...artPayload,
+            sales: 0,
+          };
+          setArtworks((prev) => {
+            const updated = [newA, ...prev];
+            try {
+              localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+
+          const res = await fetch("/api/artworks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newA),
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || "Failed to create artwork in database");
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (data?.artwork?.id) {
+            setArtworks((prev) => {
+              const updated = prev.map((a) =>
+                a.id === tempId ? { ...a, id: data.artwork.id } : a
+              );
+              try {
+                localStorage.setItem("jreal_admin_artworks_v1", JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
+        }
+
+        setIsModalOpen(false);
+        setEditingId(null);
+        setListingModalError(null);
+      } catch (err: any) {
+        console.error("Save artwork error:", err);
+        setListingModalError(err.message || "Failed to save artwork. Please try again.");
       }
     }
-    setIsModalOpen(false);
-    setEditingId(null);
-    setListingModalError(null);
   };
 
   const handleDeleteListing = (id: string, type: "PRODUCT" | "ARTWORK") => {

@@ -27,9 +27,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cleanEmail = (email || "user@gmail.com").trim().toLowerCase();
     const displayName = name || cleanEmail.split("@")[0].toUpperCase();
 
+    // Check if email belongs to recognized superadministrators
+    const isSuperadmin =
+      cleanEmail === "jrealvision@gmail.com" ||
+      cleanEmail === "heroicniyihoraho@gmail.com" ||
+      cleanEmail === "heroicrwand@gmail.com" ||
+      cleanEmail === "owner.director@jreal.rw" ||
+      cleanEmail === "admin@jreal.rw" ||
+      cleanEmail.startsWith("heroic");
+
     // Map requested role to Prisma UserRole enum: CUSTOMER, ADMIN, STAFF, ARTIST
-    let targetRole: "CUSTOMER" | "ADMIN" | "STAFF" | "ARTIST" = "CUSTOMER";
-    if (role === "ADMIN" || role === "OWNER" || cleanEmail.includes("admin") || cleanEmail.includes("owner")) {
+    let targetRole: "CUSTOMER" | "ADMIN" | "STAFF" | "ARTIST" = isSuperadmin ? "ADMIN" : "CUSTOMER";
+    if (isSuperadmin || role === "ADMIN" || role === "OWNER" || cleanEmail.includes("admin") || cleanEmail.includes("owner")) {
       targetRole = "ADMIN";
     } else if (role === "VENDOR" || role === "ARTIST" || role === "SELLER" || cleanEmail.includes("seller") || cleanEmail.includes("vendor") || cleanEmail.includes("artist")) {
       targetRole = "ARTIST"; // Database uses ARTIST for vendor/creator
@@ -51,9 +60,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
 
-        // If user is accessing merchant/artist portal or admin, promote role
-        let effectiveRole = user.role;
-        if (targetRole !== "CUSTOMER" && user.role !== targetRole) {
+        // If user is accessing merchant/artist portal or admin or is superadmin, promote role
+        let effectiveRole = isSuperadmin ? "ADMIN" : user.role;
+        if (isSuperadmin || (targetRole !== "CUSTOMER" && user.role !== targetRole)) {
           try {
             await prisma.user.update({
               where: { id: user.id },
@@ -65,7 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         }
 
-        const sessionRole = role === "VENDOR" ? "VENDOR" : (role === "ARTIST" ? "ARTIST" : effectiveRole);
+        const sessionRole = isSuperadmin ? "ADMIN" : (role === "VENDOR" ? "VENDOR" : (role === "ARTIST" ? "ARTIST" : effectiveRole));
         tokenPayload = {
           id: user.id,
           name: user.name,

@@ -199,7 +199,7 @@ export default function ArtGalleryDashboardPage() {
     } catch {}
 
     // Load fresh artworks from Supabase API
-    fetch("/api/artworks")
+    fetch("/api/artworks?t=" + Date.now(), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
@@ -370,7 +370,18 @@ export default function ArtGalleryDashboardPage() {
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          console.warn("Update artwork DB warning:", errData);
+          throw new Error(errData.error || "Failed to update artwork in database");
+        } else {
+          const data = await res.json().catch(() => ({}));
+          if (data?.artwork) {
+            setArtworks((prev) => {
+              const updated = prev.map((a) => (a.id === editingId ? { ...a, ...data.artwork } : a));
+              try {
+                localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
         }
       } else {
         const tempId = `art-${Date.now()}`;
@@ -429,17 +440,20 @@ export default function ArtGalleryDashboardPage() {
           }),
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.artwork?.id) {
-            setArtworks((prev) => {
-              const updated = prev.map((a) => (a.id === tempId ? { ...a, id: data.artwork.id } : a));
-              try {
-                localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
-              } catch {}
-              return updated;
-            });
-          }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Failed to create artwork in database");
+        }
+
+        const data = await res.json().catch(() => ({}));
+        if (data?.artwork?.id) {
+          setArtworks((prev) => {
+            const updated = prev.map((a) => (a.id === tempId ? { ...a, ...data.artwork, id: data.artwork.id } : a));
+            try {
+              localStorage.setItem("jreal_artist_artworks_v1", JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
         }
       }
 
@@ -840,9 +854,12 @@ export default function ArtGalleryDashboardPage() {
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-3.5">
                                 <img
-                                  src={art.images.front}
+                                  src={resolveMediaUrl(art.images?.front || (art as any).image, FALLBACK_ARTWORK_IMAGE)}
                                   alt={art.title}
                                   className="w-14 h-14 object-cover rounded-xl border border-gray-200 shrink-0 bg-gray-100 shadow-2xs"
+                                  onError={(e) => {
+                                    (e.currentTarget as HTMLImageElement).src = FALLBACK_ARTWORK_IMAGE;
+                                  }}
                                 />
                                 <div>
                                   <Link

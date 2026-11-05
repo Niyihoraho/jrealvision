@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -61,6 +61,18 @@ export default function AdminGalleryPage() {
   const [artists, setArtists] = useState<Artist[]>(initialArtists);
   const [orders, setOrders] = useState<EscrowOrder[]>(initialEscrowOrders);
 
+  // Fetch live artworks from Supabase API
+  useEffect(() => {
+    fetch("/api/artworks?t=" + Date.now(), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
+          setArtworks(data.artworks);
+        }
+      })
+      .catch((err) => console.warn("Failed to load admin gallery artworks:", err));
+  }, []);
+
   // Selected for inspection modal
   const [inspectArtwork, setInspectArtwork] = useState<Artwork | null>(null);
   const [inspectArtist, setInspectArtist] = useState<Artist | null>(null);
@@ -71,6 +83,11 @@ export default function AdminGalleryPage() {
     setArtworks((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: "Published" } : a))
     );
+    fetch("/api/artworks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "Published" }),
+    }).catch((err) => console.warn("Approve artwork error:", err));
     setInspectArtwork(null);
   };
 
@@ -78,6 +95,11 @@ export default function AdminGalleryPage() {
     setArtworks((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: "Draft" } : a))
     );
+    fetch("/api/artworks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status: "Draft" }),
+    }).catch((err) => console.warn("Reject artwork error:", err));
     setInspectArtwork(null);
   };
 

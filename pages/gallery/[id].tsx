@@ -27,7 +27,7 @@ export default function ArtworkDetailPage() {
   const [allArtworks, setAllArtworks] = useState<Artwork[]>(initialArtworks);
 
   useEffect(() => {
-    fetch("/api/artworks")
+    fetch("/api/artworks?t=" + Date.now(), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {

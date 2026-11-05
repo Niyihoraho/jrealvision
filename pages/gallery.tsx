@@ -21,7 +21,7 @@ export default function GalleryPage() {
 
   // Fetch live artworks from Supabase backed API
   useEffect(() => {
-    fetch("/api/artworks")
+    fetch("/api/artworks?t=" + Date.now(), { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.artworks && Array.isArray(data.artworks) && data.artworks.length > 0) {
